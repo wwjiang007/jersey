@@ -1,7 +1,7 @@
 /*
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS HEADER.
  *
- * Copyright (c) 2011-2016 Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2011-2017 Oracle and/or its affiliates. All rights reserved.
  *
  * The contents of this file are subject to the terms of either the GNU
  * General Public License Version 2 only ("GPL") or the Common Development
@@ -37,6 +37,7 @@
  * only if the new code is made subject to such option by the copyright
  * holder.
  */
+
 package org.glassfish.jersey.internal;
 
 import java.io.IOException;
@@ -65,14 +66,14 @@ import javax.ws.rs.ext.RuntimeDelegate;
 
 import javax.inject.Singleton;
 
-import org.glassfish.jersey.internal.inject.ContextInjectionResolver;
+import org.glassfish.jersey.internal.inject.Binder;
+import org.glassfish.jersey.internal.inject.CompositeBinder;
 import org.glassfish.jersey.internal.inject.CustomAnnotationLiteral;
+import org.glassfish.jersey.internal.inject.InjectionManager;
 import org.glassfish.jersey.internal.inject.Injections;
 import org.glassfish.jersey.internal.inject.ProviderBinder;
 import org.glassfish.jersey.internal.inject.Providers;
 import org.glassfish.jersey.message.internal.MessagingBinders;
-
-import org.glassfish.hk2.api.ServiceLocator;
 
 import org.junit.Test;
 import static org.junit.Assert.assertEquals;
@@ -122,13 +123,10 @@ public class ProviderBinderTest {
         }
     }
 
-    private static org.glassfish.hk2.utilities.Binder[] initBinders(org.glassfish.hk2.utilities.Binder... binders) {
-        List<org.glassfish.hk2.utilities.Binder> binderList = Arrays.stream(binders).collect(Collectors.toList());
-
-        binderList.add(new ContextInjectionResolver.Binder());
+    private static Binder initBinders(Binder... binders) {
+        List<Binder> binderList = Arrays.stream(binders).collect(Collectors.toList());
         binderList.add(new MessagingBinders.MessageBodyProviders(null, RuntimeType.SERVER));
-
-        return binderList.toArray(new org.glassfish.hk2.utilities.Binder[binderList.size()]);
+        return CompositeBinder.wrap(binderList);
     }
 
     public ProviderBinderTest() {
@@ -137,129 +135,140 @@ public class ProviderBinderTest {
 
     @Test
     public void testServicesNotEmpty() {
-        ServiceLocator locator = Injections.createLocator(initBinders());
-        Set<MessageBodyReader> providers = Providers.getProviders(locator, MessageBodyReader.class);
+        InjectionManager injectionManager = Injections.createInjectionManager(initBinders());
+        injectionManager.completeRegistration();
+        Set<MessageBodyReader> providers = Providers.getProviders(injectionManager, MessageBodyReader.class);
         assertTrue(providers.size() > 0);
     }
 
     @Test
     public void testServicesMbr() {
-        ServiceLocator locator = Injections.createLocator(initBinders());
-        Set<MessageBodyReader> providers = Providers.getProviders(locator, MessageBodyReader.class);
+        InjectionManager injectionManager = Injections.createInjectionManager(initBinders());
+        injectionManager.completeRegistration();
+        Set<MessageBodyReader> providers = Providers.getProviders(injectionManager, MessageBodyReader.class);
         assertTrue(providers.size() > 0);
     }
 
     @Test
     public void testServicesMbw() {
-        ServiceLocator locator = Injections.createLocator(initBinders());
-        Set<MessageBodyWriter> providers = Providers.getProviders(locator, MessageBodyWriter.class);
+        InjectionManager injectionManager = Injections.createInjectionManager(initBinders());
+        injectionManager.completeRegistration();
+        Set<MessageBodyWriter> providers = Providers.getProviders(injectionManager, MessageBodyWriter.class);
         assertTrue(providers.size() > 0);
     }
 
     @Test
     public void testProvidersMbr() {
-        ServiceLocator locator = Injections.createLocator(initBinders());
-        ProviderBinder providerBinder = new ProviderBinder(locator);
+        InjectionManager injectionManager = Injections.createInjectionManager(initBinders());
+        ProviderBinder providerBinder = new ProviderBinder(injectionManager);
         providerBinder.bindClasses(Collections.singleton(MyProvider.class));
-        Set<MessageBodyReader> providers = Providers.getCustomProviders(locator, MessageBodyReader.class);
+
+        injectionManager.completeRegistration();
+        Set<MessageBodyReader> providers = Providers.getCustomProviders(injectionManager, MessageBodyReader.class);
         assertEquals(1, instancesOfType(MyProvider.class, providers).size());
     }
 
     @Test
     public void testProvidersMbw() {
-        ServiceLocator locator = Injections.createLocator(initBinders());
-        ProviderBinder providerBinder = new ProviderBinder(locator);
+        InjectionManager injectionManager = Injections.createInjectionManager(initBinders());
+        ProviderBinder providerBinder = new ProviderBinder(injectionManager);
         providerBinder.bindClasses(Collections.singleton(MyProvider.class));
 
-        Set<MessageBodyWriter> providers = Providers.getCustomProviders(locator, MessageBodyWriter.class);
+        injectionManager.completeRegistration();
+        Set<MessageBodyWriter> providers = Providers.getCustomProviders(injectionManager, MessageBodyWriter.class);
         final Collection<MyProvider> myProviders = instancesOfType(MyProvider.class, providers);
         assertEquals(1, myProviders.size());
     }
 
     @Test
     public void testProvidersMbrInstance() {
-        ServiceLocator locator = Injections.createLocator(initBinders());
-        ProviderBinder providerBinder = new ProviderBinder(locator);
+        InjectionManager injectionManager = Injections.createInjectionManager(initBinders());
+        ProviderBinder providerBinder = new ProviderBinder(injectionManager);
         providerBinder.bindInstances(Collections.singleton(new MyProvider()));
-        Set<MessageBodyReader> providers = Providers.getCustomProviders(locator, MessageBodyReader.class);
+
+        injectionManager.completeRegistration();
+        Set<MessageBodyReader> providers = Providers.getCustomProviders(injectionManager, MessageBodyReader.class);
         assertEquals(1, instancesOfType(MyProvider.class, providers).size());
     }
 
     @Test
     public void testProvidersMbwInstance() {
-        ServiceLocator locator = Injections.createLocator(initBinders());
-        ProviderBinder providerBinder = new ProviderBinder(locator);
+        InjectionManager injectionManager = Injections.createInjectionManager(initBinders());
+        ProviderBinder providerBinder = new ProviderBinder(injectionManager);
         providerBinder.bindInstances(Collections.singleton(new MyProvider()));
 
-        Set<MessageBodyWriter> providers = Providers.getCustomProviders(locator, MessageBodyWriter.class);
+        injectionManager.completeRegistration();
+        Set<MessageBodyWriter> providers = Providers.getCustomProviders(injectionManager, MessageBodyWriter.class);
         assertEquals(instancesOfType(MyProvider.class, providers).size(), 1);
     }
 
     private <T> Collection<T> instancesOfType(final Class<T> c, Collection<?> collection) {
 
         return collection.stream()
-                  .filter((java.util.function.Predicate<Object>) o -> o.getClass() == c)
-                  .map((java.util.function.Function<Object, T>) c::cast)
-                  .collect(Collectors.toList());
+                .filter((java.util.function.Predicate<Object>) o -> o.getClass() == c)
+                .map((java.util.function.Function<Object, T>) c::cast)
+                .collect(Collectors.toList());
     }
 
 
     @Test
     public void testCustomRegistration() {
-        ServiceLocator locator = Injections.createLocator();
+        InjectionManager injectionManager = Injections.createInjectionManager();
 
-        ProviderBinder providerBinder = new ProviderBinder(locator);
+        ProviderBinder providerBinder = new ProviderBinder(injectionManager);
         providerBinder.bindClasses(Child.class);
         providerBinder.bindClasses(NotFilterChild.class);
+        injectionManager.completeRegistration();
 
-        ContainerRequestFilter requestFilter = getRequestFilter(locator);
-        ContainerRequestFilter requestFilter2 = getRequestFilter(locator);
+        ContainerRequestFilter requestFilter = getRequestFilter(injectionManager);
+        ContainerRequestFilter requestFilter2 = getRequestFilter(injectionManager);
         assertEquals(requestFilter, requestFilter2);
 
 
-        ContainerResponseFilter responseFilter = getResponseFilter(locator);
-        ContainerResponseFilter responseFilter2 = getResponseFilter(locator);
+        ContainerResponseFilter responseFilter = getResponseFilter(injectionManager);
+        ContainerResponseFilter responseFilter2 = getResponseFilter(injectionManager);
         assertTrue(responseFilter == responseFilter2);
 
         assertTrue(responseFilter == requestFilter);
 
         // only one filter should be registered
-        Collection<ContainerResponseFilter> filters = Providers.getCustomProviders(locator, ContainerResponseFilter.class);
+        Collection<ContainerResponseFilter> filters =
+                Providers.getCustomProviders(injectionManager, ContainerResponseFilter.class);
         assertEquals(1, filters.size());
 
-        Child child = locator.getService(Child.class);
-        Child child2 = locator.getService(Child.class);
+        Child child = injectionManager.getInstance(Child.class);
+        Child child2 = injectionManager.getInstance(Child.class);
 
         assertTrue(child != responseFilter);
 
         assertTrue(child == child2);
     }
 
-    private ContainerResponseFilter getResponseFilter(ServiceLocator locator) {
+    private ContainerResponseFilter getResponseFilter(InjectionManager injectionManager) {
         ContainerResponseFilter responseFilter =
-                locator.getService(ContainerResponseFilter.class, CustomAnnotationLiteral.INSTANCE);
+                injectionManager.getInstance(ContainerResponseFilter.class, CustomAnnotationLiteral.INSTANCE);
         assertEquals(Child.class, responseFilter.getClass());
         return responseFilter;
     }
 
-    private ContainerRequestFilter getRequestFilter(ServiceLocator locator) {
+    private ContainerRequestFilter getRequestFilter(InjectionManager injectionManager) {
         ContainerRequestFilter requestFilter =
-                locator.getService(ContainerRequestFilter.class, CustomAnnotationLiteral.INSTANCE);
+                injectionManager.getInstance(ContainerRequestFilter.class, CustomAnnotationLiteral.INSTANCE);
         assertEquals(Child.class, requestFilter.getClass());
         return requestFilter;
     }
 
-    public static interface ParentInterface {
+    interface ParentInterface {
     }
 
-    public static interface ChildInterface extends ChildSuperInterface {
+    interface ChildInterface extends ChildSuperInterface {
     }
 
 
-    public static interface SecondChildInterface {
+    interface SecondChildInterface {
     }
 
-    public static interface ChildSuperInterface extends ContainerResponseFilter {
+    interface ChildSuperInterface extends ContainerResponseFilter {
     }
 
     @Singleton
@@ -276,29 +285,6 @@ public class ProviderBinderTest {
         }
     }
 
-    public static class NotFilterChild implements ParentInterface {
-    }
-
-    public static interface SingletonTest {
-        public int getCount();
-    }
-
-
-    public static interface SingletonTestStr {
-        public int getCountStr();
-    }
-
-    public static class SingletonClass implements SingletonTest, SingletonTestStr {
-        private int counter = 1;
-
-        @Override
-        public int getCount() {
-            return counter++;
-        }
-
-        @Override
-        public int getCountStr() {
-            return counter++;
-        }
+    private static class NotFilterChild implements ParentInterface {
     }
 }

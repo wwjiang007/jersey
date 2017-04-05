@@ -1,7 +1,7 @@
 /*
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS HEADER.
  *
- * Copyright (c) 2011-2015 Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2011-2017 Oracle and/or its affiliates. All rights reserved.
  *
  * The contents of this file are subject to the terms of either the GNU
  * General Public License Version 2 only ("GPL") or the Common Development
@@ -37,26 +37,27 @@
  * only if the new code is made subject to such option by the copyright
  * holder.
  */
+
 package org.glassfish.jersey.server.model.internal;
 
 import java.lang.reflect.InvocationHandler;
 import java.lang.reflect.Type;
+import java.util.Collection;
 import java.util.List;
 
 import javax.ws.rs.ProcessingException;
 import javax.ws.rs.core.GenericEntity;
 import javax.ws.rs.core.Response;
-
-import javax.inject.Inject;
+import javax.ws.rs.sse.SseEventSink;
 
 import org.glassfish.jersey.server.ContainerRequest;
 import org.glassfish.jersey.server.internal.inject.ConfiguredValidator;
 import org.glassfish.jersey.server.model.Invocable;
+import org.glassfish.jersey.server.model.Parameter;
 import org.glassfish.jersey.server.spi.internal.ParamValueFactoryWithSource;
 import org.glassfish.jersey.server.spi.internal.ParameterValueHelper;
 import org.glassfish.jersey.server.spi.internal.ResourceMethodDispatcher;
-
-import org.glassfish.hk2.api.ServiceLocator;
+import org.glassfish.jersey.server.spi.internal.ValueSupplierProvider;
 
 /**
  * An implementation of {@link ResourceMethodDispatcher.Provider} that
@@ -67,18 +68,21 @@ import org.glassfish.hk2.api.ServiceLocator;
  */
 class JavaResourceMethodDispatcherProvider implements ResourceMethodDispatcher.Provider {
 
-    @Inject
-    private ServiceLocator serviceLocator;
+    private final Collection<ValueSupplierProvider> allValueProviders;
+
+    JavaResourceMethodDispatcherProvider(Collection<ValueSupplierProvider> allValueProviders) {
+        this.allValueProviders = allValueProviders;
+    }
 
     @Override
     public ResourceMethodDispatcher create(final Invocable resourceMethod,
             final InvocationHandler invocationHandler,
             final ConfiguredValidator validator) {
         final List<ParamValueFactoryWithSource<?>> valueProviders =
-                ParameterValueHelper.createValueProviders(serviceLocator, resourceMethod);
+                ParameterValueHelper.createValueProviders(allValueProviders, resourceMethod);
         final Class<?> returnType = resourceMethod.getHandlingMethod().getReturnType();
 
-        ResourceMethodDispatcher resourceMethodDispatcher;
+        ResourceMethodDispatcher resourceMethodDispatcher = null;
         if (Response.class.isAssignableFrom(returnType)) {
             resourceMethodDispatcher =
                     new ResponseOutInvoker(resourceMethod, invocationHandler, valueProviders, validator);
@@ -91,30 +95,30 @@ class JavaResourceMethodDispatcherProvider implements ResourceMethodDispatcher.P
                         new TypeOutInvoker(resourceMethod, invocationHandler, valueProviders, validator);
             }
         } else {
-            resourceMethodDispatcher
-                    = new VoidOutInvoker(resourceMethod, invocationHandler, valueProviders, validator);
+            // return type is void
+            int i = 0;
+            for (final Parameter parameter : resourceMethod.getParameters()) {
+                if (SseEventSink.class.equals(parameter.getRawType())) {
+                    resourceMethodDispatcher =
+                            new SseEventSinkInvoker(resourceMethod, invocationHandler, valueProviders, validator, i);
+                    break;
+                }
+                i++;
+            }
+
+            if (resourceMethodDispatcher == null) {
+                resourceMethodDispatcher = new VoidOutInvoker(resourceMethod, invocationHandler, valueProviders, validator);
+            }
         }
 
-        // Inject validator.
-        serviceLocator.inject(resourceMethodDispatcher);
-
         return resourceMethodDispatcher;
-    }
-
-    /**
-     * Get the application-configured HK2 service locator.
-     *
-     * @return application-configured HK2 service locator.
-     */
-    final ServiceLocator getServiceLocator() {
-        return serviceLocator;
     }
 
     private abstract static class AbstractMethodParamInvoker extends AbstractJavaResourceMethodDispatcher {
 
         private final List<ParamValueFactoryWithSource<?>> valueProviders;
 
-        public AbstractMethodParamInvoker(
+        AbstractMethodParamInvoker(
                 final Invocable resourceMethod,
                 final InvocationHandler handler,
                 final List<ParamValueFactoryWithSource<?>> valueProviders,
@@ -128,9 +132,37 @@ class JavaResourceMethodDispatcherProvider implements ResourceMethodDispatcher.P
         }
     }
 
+    private static final class SseEventSinkInvoker extends AbstractMethodParamInvoker {
+
+        private final int parameterIndex;
+
+        SseEventSinkInvoker(
+                final Invocable resourceMethod,
+                final InvocationHandler handler,
+                final List<ParamValueFactoryWithSource<?>> valueProviders,
+                final ConfiguredValidator validator,
+                final int parameterIndex) {
+            super(resourceMethod, handler, valueProviders, validator);
+            this.parameterIndex = parameterIndex;
+        }
+
+        @Override
+        protected Response doDispatch(final Object resource, final ContainerRequest request) throws ProcessingException {
+            final Object[] paramValues = getParamValues();
+            invoke(request, resource, paramValues);
+
+            final SseEventSink eventSink = (SseEventSink) paramValues[parameterIndex];
+
+            if (eventSink == null) {
+                throw new IllegalArgumentException("SseEventSink parameter detected, but not found.");
+            }
+            return Response.ok().entity(eventSink).build();
+        }
+    }
+
     private static final class VoidOutInvoker extends AbstractMethodParamInvoker {
 
-        public VoidOutInvoker(
+        VoidOutInvoker(
                 final Invocable resourceMethod,
                 final InvocationHandler handler,
                 final List<ParamValueFactoryWithSource<?>> valueProviders,
@@ -147,7 +179,7 @@ class JavaResourceMethodDispatcherProvider implements ResourceMethodDispatcher.P
 
     private static final class ResponseOutInvoker extends AbstractMethodParamInvoker {
 
-        public ResponseOutInvoker(
+        ResponseOutInvoker(
                 final Invocable resourceMethod,
                 final InvocationHandler handler,
                 final List<ParamValueFactoryWithSource<?>> valueProviders,
@@ -163,7 +195,7 @@ class JavaResourceMethodDispatcherProvider implements ResourceMethodDispatcher.P
 
     private static final class ObjectOutInvoker extends AbstractMethodParamInvoker {
 
-        public ObjectOutInvoker(
+        ObjectOutInvoker(
                 final Invocable resourceMethod,
                 final InvocationHandler handler,
                 final List<ParamValueFactoryWithSource<?>> valueProviders,
@@ -191,7 +223,7 @@ class JavaResourceMethodDispatcherProvider implements ResourceMethodDispatcher.P
 
         private final Type t;
 
-        public TypeOutInvoker(
+        TypeOutInvoker(
                 final Invocable resourceMethod,
                 final InvocationHandler handler,
                 final List<ParamValueFactoryWithSource<?>> valueProviders,

@@ -1,7 +1,7 @@
 /*
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS HEADER.
  *
- * Copyright (c) 2015 Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2015-2017 Oracle and/or its affiliates. All rights reserved.
  *
  * The contents of this file are subject to the terms of either the GNU
  * General Public License Version 2 only ("GPL") or the Common Development
@@ -53,18 +53,14 @@ import javax.inject.Named;
 import javax.inject.Qualifier;
 import javax.inject.Singleton;
 
+import org.glassfish.jersey.internal.inject.AbstractBinder;
+import org.glassfish.jersey.internal.inject.InjectionManager;
 import org.glassfish.jersey.internal.inject.Injections;
 import org.glassfish.jersey.internal.util.Producer;
 import org.glassfish.jersey.spi.ExecutorServiceProvider;
 import org.glassfish.jersey.spi.ScheduledExecutorServiceProvider;
 import org.glassfish.jersey.spi.ScheduledThreadPoolExecutorProvider;
 import org.glassfish.jersey.spi.ThreadPoolExecutorProvider;
-
-import org.glassfish.hk2.api.ServiceLocator;
-import org.glassfish.hk2.api.Unqualified;
-import org.glassfish.hk2.utilities.binding.AbstractBinder;
-
-import org.jvnet.hk2.annotations.Optional;
 
 import org.hamcrest.Matchers;
 import org.junit.Before;
@@ -190,32 +186,12 @@ public class ExecutorProvidersTest extends AbstractBinder {
         private PreDestroyNotifier preDestroyNotifier;
 
         @Inject
-        @Unqualified // this will prevent HK2 from injecting using qualified injection bindings
-        @Optional // This will prevent HK2 to fail due to an unsatisfied injection binding
-        private ExecutorService unqualifiedExecutor;
-
-        @Inject
-        @Unqualified // this will prevent HK2 from injecting using qualified injection bindings
-        @Optional // This will prevent HK2 to fail due to an unsatisfied injection binding
-        private ScheduledExecutorService unqualifiedScheduler;
-
-        @Inject
         @CustomExecutor
         private ExecutorService customExecutor;
 
         @Inject
         @Named("custom-executor")
         private ExecutorService customNamedExecutor;
-
-        @Inject
-        @Optional
-        @CustomExecutor
-        private ScheduledExecutorService customExecutorAsScheduler;
-
-        @Inject
-        @Named("custom-executor")
-        @Optional
-        private ScheduledExecutorService customNamedExecutorAsScheduler;
 
         @Inject
         @CustomScheduler
@@ -235,7 +211,7 @@ public class ExecutorProvidersTest extends AbstractBinder {
 
     }
 
-    private ServiceLocator locator;
+    private InjectionManager injectionManager;
 
     @Override
     protected void configure() {
@@ -251,27 +227,22 @@ public class ExecutorProvidersTest extends AbstractBinder {
      */
     @Before
     public void setup() {
-        locator = Injections.createLocator(this);
-        ExecutorProviders.createInjectionBindings(locator);
+        injectionManager = Injections.createInjectionManager(this);
+        ExecutorProviders.registerExecutorBindings(injectionManager);
+        injectionManager.completeRegistration();
     }
 
     /**
-     * Test executor and scheduler injection as well as the proper shutdown when service locator is closed.
+     * Test executor and scheduler injection as well as the proper shutdown when injection manager is closed.
      *
      * @throws Exception in case of a test error.
      */
     @Test
     public void testExecutorInjectionAndReleasing() throws Exception {
-        final InjectedExecutorClient executorClient = Injections.getOrCreate(locator, InjectedExecutorClient.class);
-
-        // Check expected injection points state
-        assertThat(executorClient.unqualifiedExecutor, Matchers.nullValue());
-        assertThat(executorClient.unqualifiedScheduler, Matchers.nullValue());
+        final InjectedExecutorClient executorClient = Injections.getOrCreate(injectionManager, InjectedExecutorClient.class);
 
         assertThat(executorClient.customExecutor, Matchers.notNullValue());
         assertThat(executorClient.customNamedExecutor, Matchers.notNullValue());
-        assertThat(executorClient.customExecutorAsScheduler, Matchers.nullValue());
-        assertThat(executorClient.customNamedExecutorAsScheduler, Matchers.nullValue());
 
         assertThat(executorClient.customScheduler, Matchers.notNullValue());
         assertThat(executorClient.customNamedScheduler, Matchers.notNullValue());
@@ -297,7 +268,7 @@ public class ExecutorProvidersTest extends AbstractBinder {
                 Matchers.startsWith("custom-named-scheduler-"));
 
         // Test proper executor shutdown when locator is shut down.
-        Injections.shutdownLocator(locator);
+        injectionManager.shutdown();
 
         assertThat("Waiting for pre-destroy timed out.",
                 executorClient.preDestroyNotifier.await(3, TimeUnit.SECONDS), Matchers.is(true));

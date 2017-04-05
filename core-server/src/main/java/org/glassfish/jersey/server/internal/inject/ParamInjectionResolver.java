@@ -1,7 +1,7 @@
 /*
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS HEADER.
  *
- * Copyright (c) 2012-2016 Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2012-2017 Oracle and/or its affiliates. All rights reserved.
  *
  * The contents of this file are subject to the terms of either the GNU
  * General Public License Version 2 only ("GPL") or the Common Development
@@ -45,24 +45,15 @@ import java.lang.reflect.AnnotatedElement;
 import java.lang.reflect.Constructor;
 import java.lang.reflect.Method;
 import java.lang.reflect.Type;
-import java.util.Set;
-import java.util.function.Predicate;
-import java.util.stream.Collectors;
+import java.util.function.Supplier;
 
 import javax.ws.rs.Encoded;
 
-import javax.inject.Inject;
-
-import org.glassfish.jersey.internal.inject.Providers;
+import org.glassfish.jersey.internal.inject.Injectee;
+import org.glassfish.jersey.internal.inject.InjectionResolver;
 import org.glassfish.jersey.internal.util.ReflectionHelper;
 import org.glassfish.jersey.server.model.Parameter;
-import org.glassfish.jersey.server.spi.internal.ValueFactoryProvider;
-
-import org.glassfish.hk2.api.Factory;
-import org.glassfish.hk2.api.Injectee;
-import org.glassfish.hk2.api.InjectionResolver;
-import org.glassfish.hk2.api.ServiceHandle;
-import org.glassfish.hk2.api.ServiceLocator;
+import org.glassfish.jersey.server.spi.internal.ValueSupplierProvider;
 
 /**
  * Abstract base class for resolving JAX-RS {@code &#64;XxxParam} injection.
@@ -70,25 +61,24 @@ import org.glassfish.hk2.api.ServiceLocator;
  * @param <A> supported parameter injection annotation.
  * @author Marek Potociar (marek.potociar at oracle.com)
  */
-public abstract class ParamInjectionResolver<A extends Annotation> implements InjectionResolver<A> {
+public class ParamInjectionResolver<A extends Annotation> implements InjectionResolver<A> {
 
-    @Inject
-    private ServiceLocator locator;
-    private final Predicate<ValueFactoryProvider> concreteValueFactoryClassFilter;
+    private final ValueSupplierProvider valueSupplierProvider;
+    private final Class<A> annotation;
 
     /**
      * Initialize the base parameter injection resolver.
      *
-     * @param valueFactoryProviderClass parameter value factory provider class.
+     * @param valueSupplierProvider parameter value supplier provider.
      */
-    public ParamInjectionResolver(final Class<? extends ValueFactoryProvider> valueFactoryProviderClass) {
-        this.concreteValueFactoryClassFilter = valueFactoryProviderClass::isInstance;
+    public ParamInjectionResolver(ValueSupplierProvider valueSupplierProvider, Class<A> annotation) {
+        this.valueSupplierProvider = valueSupplierProvider;
+        this.annotation = annotation;
     }
 
     @Override
     @SuppressWarnings("unchecked")
-    public Object resolve(Injectee injectee, ServiceHandle<?> root) {
-
+    public Object resolve(Injectee injectee) {
         AnnotatedElement annotated = injectee.getParent();
         Annotation[] annotations;
         if (annotated.getClass().equals(Constructor.class)) {
@@ -99,21 +89,15 @@ public abstract class ParamInjectionResolver<A extends Annotation> implements In
 
         Class componentClass = injectee.getInjecteeClass();
         Type genericType = injectee.getRequiredType();
-        boolean isHk2Factory = ReflectionHelper.isSubClassOf(genericType, Factory.class);
 
         final Type targetGenericType;
-        if (isHk2Factory) {
+        if (injectee.isFactory()) {
             targetGenericType = ReflectionHelper.getTypeArgument(genericType, 0);
         } else {
             targetGenericType = genericType;
         }
         final Class<?> targetType = ReflectionHelper.erasure(targetGenericType);
 
-        Set<ValueFactoryProvider> providers = Providers.getProviders(locator, ValueFactoryProvider.class)
-                                                       .stream()
-                                                       .filter(concreteValueFactoryClassFilter)
-                                                       .collect(Collectors.toSet());
-        final ValueFactoryProvider valueFactoryProvider = providers.iterator().next(); // get first provider in the set
         final Parameter parameter = Parameter.create(
                 componentClass,
                 componentClass,
@@ -122,12 +106,12 @@ public abstract class ParamInjectionResolver<A extends Annotation> implements In
                 targetGenericType,
                 annotations);
 
-        final Factory<?> valueFactory = valueFactoryProvider.getValueFactory(parameter);
-        if (valueFactory != null) {
-            if (isHk2Factory) {
-                return valueFactory;
+        final Supplier<?> paramValueSupplier = valueSupplierProvider.getValueSupplier(parameter);
+        if (paramValueSupplier != null) {
+            if (injectee.isFactory()) {
+                return paramValueSupplier;
             } else {
-                return valueFactory.provide();
+                return paramValueSupplier.get();
             }
         }
 
@@ -175,5 +159,10 @@ public abstract class ParamInjectionResolver<A extends Annotation> implements In
     @Override
     public boolean isMethodParameterIndicator() {
         return false;
+    }
+
+    @Override
+    public Class<A> getAnnotation() {
+        return annotation;
     }
 }

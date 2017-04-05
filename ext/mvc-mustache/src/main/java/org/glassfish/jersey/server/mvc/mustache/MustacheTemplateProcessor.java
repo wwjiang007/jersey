@@ -1,7 +1,7 @@
 /*
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS HEADER.
  *
- * Copyright (c) 2013-2015 Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2013-2017 Oracle and/or its affiliates. All rights reserved.
  *
  * The contents of this file are subject to the terms of either the GNU
  * General Public License Version 2 only ("GPL") or the Common Development
@@ -45,23 +45,18 @@ import java.io.OutputStream;
 import java.io.OutputStreamWriter;
 import java.io.Reader;
 import java.nio.charset.Charset;
+import java.util.function.Function;
 
 import javax.ws.rs.core.Configuration;
 import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.MultivaluedMap;
 
-import javax.inject.Inject;
 import javax.inject.Singleton;
 import javax.servlet.ServletContext;
 
-import org.glassfish.jersey.internal.util.collection.Value;
 import org.glassfish.jersey.server.mvc.Viewable;
 import org.glassfish.jersey.server.mvc.spi.AbstractTemplateProcessor;
 import org.glassfish.jersey.server.mvc.spi.TemplateProcessor;
-
-import org.glassfish.hk2.api.ServiceLocator;
-
-import org.jvnet.hk2.annotations.Optional;
 
 import com.github.mustachejava.DefaultMustacheFactory;
 import com.github.mustachejava.Mustache;
@@ -80,24 +75,17 @@ final class MustacheTemplateProcessor extends AbstractTemplateProcessor<Mustache
     private final MustacheFactory factory;
 
     /**
-     * Create an instance of this processor with injected {@link Configuration config} and
-     * (optional) {@link ServletContext servlet context}.
+     * Create an instance of this processor with injected {@link Configuration config} and (nullable)
+     * {@link ServletContext servlet context}.
      *
-     * @param config configuration to configure this processor from.
-     * @param serviceLocator service locator to initialize template object factory if needed.
-     * @param servletContext (optional) servlet context to obtain template resources from.
+     * @param config         configuration to configure this processor from.
+     * @param servletContext servlet context to obtain template resources from.
+     * @param createInstance function that delegates a creation and an initialization to injection manager.
      */
-    @Inject
-    public MustacheTemplateProcessor(final Configuration config, final ServiceLocator serviceLocator,
-                                     @Optional final ServletContext servletContext) {
+    public MustacheTemplateProcessor(Configuration config, ServletContext servletContext, Function<Class<?>, ?> createInstance) {
         super(config, servletContext, "mustache", "mustache");
 
-        this.factory = getTemplateObjectFactory(serviceLocator, MustacheFactory.class, new Value<MustacheFactory>() {
-            @Override
-            public MustacheFactory get() {
-                return new DefaultMustacheFactory();
-            }
-        });
+        this.factory = getTemplateObjectFactory(createInstance, MustacheFactory.class, DefaultMustacheFactory::new);
     }
 
     @Override

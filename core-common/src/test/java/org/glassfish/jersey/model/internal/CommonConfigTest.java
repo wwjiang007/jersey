@@ -1,7 +1,7 @@
 /*
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS HEADER.
  *
- * Copyright (c) 2012-2016 Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2012-2017 Oracle and/or its affiliates. All rights reserved.
  *
  * The contents of this file are subject to the terms of either the GNU
  * General Public License Version 2 only ("GPL") or the Common Development
@@ -64,13 +64,12 @@ import javax.ws.rs.ext.WriterInterceptorContext;
 import javax.annotation.Priority;
 import javax.inject.Inject;
 
+import org.glassfish.jersey.internal.inject.AbstractBinder;
+import org.glassfish.jersey.internal.inject.InjectionManager;
 import org.glassfish.jersey.internal.inject.Injections;
 import org.glassfish.jersey.internal.inject.ProviderBinder;
 import org.glassfish.jersey.internal.inject.Providers;
 import org.glassfish.jersey.model.ContractProvider;
-
-import org.glassfish.hk2.api.ServiceLocator;
-import org.glassfish.hk2.utilities.binding.AbstractBinder;
 
 import org.junit.Before;
 import org.junit.Ignore;
@@ -594,15 +593,17 @@ public class CommonConfigTest {
 
     @Test
     public void testProviderOrderManual() throws Exception {
-        final ServiceLocator locator = Injections.createLocator();
+        InjectionManager injectionManager = Injections.createInjectionManager();
 
         config.register(MidPriorityProvider.class, 500);
         config.register(LowPriorityProvider.class, 20);
         config.register(HighPriorityProvider.class, 150);
 
-        ProviderBinder.bindProviders(config.getComponentBag(), locator);
+        ProviderBinder.bindProviders(config.getComponentBag(), injectionManager);
+
+        injectionManager.completeRegistration();
         final Iterable<WriterInterceptor> allProviders =
-                Providers.getAllProviders(locator, WriterInterceptor.class, new RankedComparator<WriterInterceptor>());
+                Providers.getAllProviders(injectionManager, WriterInterceptor.class, new RankedComparator<>());
 
         final Iterator<WriterInterceptor> iterator = allProviders.iterator();
 
@@ -614,15 +615,16 @@ public class CommonConfigTest {
 
     @Test
     public void testProviderOrderSemiAutomatic() throws Exception {
-        final ServiceLocator locator = Injections.createLocator();
+        InjectionManager injectionManager = Injections.createInjectionManager();
 
         config.register(MidPriorityProvider.class, 50);
         config.register(LowPriorityProvider.class, 2000);
         config.register(HighPriorityProvider.class);
 
-        ProviderBinder.bindProviders(config.getComponentBag(), locator);
+        ProviderBinder.bindProviders(config.getComponentBag(), injectionManager);
+        injectionManager.completeRegistration();
         final Iterable<WriterInterceptor> allProviders =
-                Providers.getAllProviders(locator, WriterInterceptor.class, new RankedComparator<WriterInterceptor>());
+                Providers.getAllProviders(injectionManager, WriterInterceptor.class, new RankedComparator<>());
 
         final Iterator<WriterInterceptor> iterator = allProviders.iterator();
 
@@ -634,15 +636,16 @@ public class CommonConfigTest {
 
     @Test
     public void testProviderOrderAutomatic() throws Exception {
-        final ServiceLocator locator = Injections.createLocator();
-
+        InjectionManager injectionManager = Injections.createInjectionManager();
         config.register(MidPriorityProvider.class);
         config.register(LowPriorityProvider.class);
         config.register(HighPriorityProvider.class);
 
-        ProviderBinder.bindProviders(config.getComponentBag(), locator);
+        ProviderBinder.bindProviders(config.getComponentBag(), injectionManager);
+        injectionManager.completeRegistration();
+
         final Iterable<WriterInterceptor> allProviders =
-                Providers.getAllProviders(locator, WriterInterceptor.class, new RankedComparator<WriterInterceptor>());
+                Providers.getAllProviders(injectionManager, WriterInterceptor.class, new RankedComparator<>());
 
         final Iterator<WriterInterceptor> iterator = allProviders.iterator();
 
@@ -655,7 +658,7 @@ public class CommonConfigTest {
     @Test
     @SuppressWarnings("unchecked")
     public void testProviderOrderDifForContracts() throws Exception {
-        final Map<Class<?>, Integer> contracts = new IdentityHashMap<Class<?>, Integer>();
+        final Map<Class<?>, Integer> contracts = new IdentityHashMap<>();
 
         contracts.put(WriterInterceptor.class, ContractProvider.NO_PRIORITY);
         contracts.put(ReaderInterceptor.class, 2000);
@@ -672,10 +675,12 @@ public class CommonConfigTest {
         config.register(HighPriorityProvider.class, contracts);
         contracts.clear();
 
-        final ServiceLocator locator = Injections.createLocator();
-        ProviderBinder.bindProviders(config.getComponentBag(), locator);
+        InjectionManager injectionManager = Injections.createInjectionManager();
+        ProviderBinder.bindProviders(config.getComponentBag(), injectionManager);
+
+        injectionManager.completeRegistration();
         final Iterable<WriterInterceptor> writerInterceptors =
-                Providers.getAllProviders(locator, WriterInterceptor.class, new RankedComparator<WriterInterceptor>());
+                Providers.getAllProviders(injectionManager, WriterInterceptor.class, new RankedComparator<>());
 
         final Iterator<WriterInterceptor> writerIterator = writerInterceptors.iterator();
 
@@ -685,7 +690,7 @@ public class CommonConfigTest {
         assertFalse(writerIterator.hasNext());
 
         final Iterable<ReaderInterceptor> readerInterceptors =
-                Providers.getAllProviders(locator, ReaderInterceptor.class, new RankedComparator<ReaderInterceptor>());
+                Providers.getAllProviders(injectionManager, ReaderInterceptor.class, new RankedComparator<>());
 
         final Iterator<ReaderInterceptor> readerIterator = readerInterceptors.iterator();
 
@@ -806,7 +811,9 @@ public class CommonConfigTest {
     public void testConfigureFeatureHierarchy() throws Exception {
         config.register(ComplexFeature.class);
 
-        config.configureMetaProviders(Injections.createLocator());
+        InjectionManager injectionManager = Injections.createInjectionManager();
+        ManagedObjectsFinalizer finalizer = new ManagedObjectsFinalizer(injectionManager);
+        config.configureMetaProviders(injectionManager, finalizer);
 
         assertTrue(config.getConfiguration().isEnabled(ComplexFeature.class));
 
@@ -817,7 +824,9 @@ public class CommonConfigTest {
     @Test
     public void testConfigureFeatureRecursive() throws Exception {
         config.register(RecursiveFeature.class);
-        config.configureMetaProviders(Injections.createLocator());
+        InjectionManager injectionManager = Injections.createInjectionManager();
+        ManagedObjectsFinalizer finalizer = new ManagedObjectsFinalizer(injectionManager);
+        config.configureMetaProviders(injectionManager, finalizer);
 
         assertTrue(config.getConfiguration().isEnabled(RecursiveFeature.class));
         assertEquals(1, config.getInstances().size());
@@ -831,7 +840,9 @@ public class CommonConfigTest {
         final SimpleFeatureA f2 = new SimpleFeatureA(true);
         config.register(f2);
 
-        config.configureMetaProviders(Injections.createLocator());
+        InjectionManager injectionManager = Injections.createInjectionManager();
+        ManagedObjectsFinalizer finalizer = new ManagedObjectsFinalizer(injectionManager);
+        config.configureMetaProviders(injectionManager, finalizer);
 
         assertTrue(config.getConfiguration().isEnabled(f1));
         assertFalse(config.getConfiguration().isEnabled(f2));
@@ -847,7 +858,9 @@ public class CommonConfigTest {
         final InstanceFeatureA f2 = new InstanceFeatureA(true);
         config.register(f2);
 
-        config.configureMetaProviders(Injections.createLocator());
+        InjectionManager injectionManager = Injections.createInjectionManager();
+        ManagedObjectsFinalizer finalizer = new ManagedObjectsFinalizer(injectionManager);
+        config.configureMetaProviders(injectionManager, finalizer);
 
         assertTrue(config.getConfiguration().isEnabled(f1));
         assertFalse(config.getConfiguration().isEnabled(f2));
@@ -855,7 +868,8 @@ public class CommonConfigTest {
         final Set<Object> providerInstances = config.getInstances();
         assertEquals(2, providerInstances.size());
 
-        final Set<Object> pureProviderInstances = config.getComponentBag().getInstances(ComponentBag.EXCLUDE_META_PROVIDERS);
+        final Set<Object> pureProviderInstances =
+                config.getComponentBag().getInstances(ComponentBag.excludeMetaProviders(injectionManager));
         assertEquals(1, pureProviderInstances.size());
 
         int a = 0;
@@ -874,10 +888,13 @@ public class CommonConfigTest {
     @Test
     public void testConfigureFeatureInstanceRecursive() throws Exception {
         config.register(new RecursiveInstanceFeature());
-        config.configureMetaProviders(Injections.createLocator());
+        InjectionManager injectionManager = Injections.createInjectionManager();
+        ManagedObjectsFinalizer finalizer = new ManagedObjectsFinalizer(injectionManager);
+        config.configureMetaProviders(injectionManager, finalizer);
         assertEquals(0, config.getClasses().size());
         assertEquals(2, config.getInstances().size());
-        final Set<Object> pureProviders = config.getComponentBag().getInstances(ComponentBag.EXCLUDE_META_PROVIDERS);
+        final Set<Object> pureProviders =
+                config.getComponentBag().getInstances(ComponentBag.excludeMetaProviders(injectionManager));
         assertEquals(1, pureProviders.size());
         assertSame(CustomReaderA.class, pureProviders.iterator().next().getClass());
     }
@@ -908,14 +925,16 @@ public class CommonConfigTest {
     @Test
     public void testBinderConfiguringFeature() throws Exception {
         config.register(ContractBinderFeature.class);
-        final ServiceLocator locator = Injections.createLocator();
-        config.configureMetaProviders(locator);
+        InjectionManager injectionManager = Injections.createInjectionManager();
+        ManagedObjectsFinalizer finalizer = new ManagedObjectsFinalizer(injectionManager);
+        config.configureMetaProviders(injectionManager, finalizer);
+        injectionManager.completeRegistration();
 
         assertTrue(config.isEnabled(ContractBinderFeature.class));
         assertEquals(1, config.getInstances().size());
         assertSame(ContractBinder.class, config.getInstances().iterator().next().getClass());
 
-        final Contract service = locator.getService(Contract.class);
+        final Contract service = injectionManager.getInstance(Contract.class);
         assertNotNull(service);
         assertSame(Service.class, service.getClass());
     }
@@ -971,8 +990,9 @@ public class CommonConfigTest {
                     }
                 });
 
-        final ServiceLocator locator = Injections.createLocator();
-        config.configureMetaProviders(locator);
+        InjectionManager injectionManager = Injections.createInjectionManager();
+        ManagedObjectsFinalizer finalizer = new ManagedObjectsFinalizer(injectionManager);
+        config.configureMetaProviders(injectionManager, finalizer);
 
         assertThat("Feature instance not injected", config.getProperty("instance-injected").toString(), is("true"));
         assertThat("Feature class not injected", config.getProperty("class-injected").toString(), is("true"));
@@ -985,8 +1005,9 @@ public class CommonConfigTest {
         config.register(InjectIntoFeatureClass.class);
         config.register(new InjectIntoFeatureInstance());
 
-        final ServiceLocator locator = Injections.createLocator();
-        config.configureMetaProviders(locator);
+        InjectionManager injectionManager = Injections.createInjectionManager();
+        ManagedObjectsFinalizer finalizer = new ManagedObjectsFinalizer(injectionManager);
+        config.configureMetaProviders(injectionManager, finalizer);
 
         assertThat("Feature instance not injected", config.getProperty("instance-injected").toString(), is("true"));
         assertThat("Feature class not injected", config.getProperty("class-injected").toString(), is("true"));

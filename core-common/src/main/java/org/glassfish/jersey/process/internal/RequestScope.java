@@ -1,7 +1,7 @@
 /*
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS HEADER.
  *
- * Copyright (c) 2010-2016 Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2010-2017 Oracle and/or its affiliates. All rights reserved.
  *
  * The contents of this file are subject to the terms of either the GNU
  * General Public License Version 2 only ("GPL") or the Common Development
@@ -40,7 +40,6 @@
 
 package org.glassfish.jersey.process.internal;
 
-import java.lang.annotation.Annotation;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Map;
@@ -51,15 +50,15 @@ import java.util.logging.Logger;
 
 import javax.inject.Singleton;
 
+import org.glassfish.jersey.internal.BootstrapBag;
+import org.glassfish.jersey.internal.BootstrapConfigurator;
 import org.glassfish.jersey.internal.Errors;
+import org.glassfish.jersey.internal.inject.Bindings;
+import org.glassfish.jersey.internal.inject.ForeignDescriptor;
+import org.glassfish.jersey.internal.inject.InjectionManager;
 import org.glassfish.jersey.internal.util.ExtendedLogger;
 import org.glassfish.jersey.internal.util.LazyUid;
 import org.glassfish.jersey.internal.util.Producer;
-
-import org.glassfish.hk2.api.ActiveDescriptor;
-import org.glassfish.hk2.api.Context;
-import org.glassfish.hk2.api.ServiceHandle;
-import org.glassfish.hk2.utilities.binding.AbstractBinder;
 
 import static org.glassfish.jersey.internal.guava.Preconditions.checkState;
 
@@ -135,69 +134,36 @@ import static org.glassfish.jersey.internal.guava.Preconditions.checkState;
  * @author Miroslav Fuksa
  */
 @Singleton
-public class RequestScope implements Context<RequestScoped> {
+public class RequestScope {
 
     private static final ExtendedLogger logger = new ExtendedLogger(Logger.getLogger(RequestScope.class.getName()), Level.FINEST);
 
     /**
      * A thread local copy of the current scope instance.
      */
-    private final ThreadLocal<Instance> currentScopeInstance = new ThreadLocal<Instance>();
+    private final ThreadLocal<Instance> currentScopeInstance = new ThreadLocal<>();
     private volatile boolean isActive = true;
 
-    @Override
-    public Class<? extends Annotation> getScope() {
-        return RequestScoped.class;
-    }
-
-    @Override
-    public <U> U findOrCreate(ActiveDescriptor<U> activeDescriptor, ServiceHandle<?> root) {
-
-        final Instance instance = current();
-
-        U retVal = instance.get(activeDescriptor);
-        if (retVal == null) {
-            retVal = activeDescriptor.create(root);
-            instance.put(activeDescriptor, retVal);
-        }
-        return retVal;
-    }
-
-    @Override
-    public boolean containsKey(ActiveDescriptor<?> descriptor) {
-        final Instance instance = current();
-        return instance.contains(descriptor);
-    }
-
-    @Override
-    public boolean supportsNullCreation() {
-        return true;
-    }
-
-    @Override
     public boolean isActive() {
         return isActive;
     }
 
-    @Override
-    public void destroyOne(ActiveDescriptor<?> descriptor) {
-        final Instance instance = current();
-        instance.remove(descriptor);
-    }
-
-    @Override
     public void shutdown() {
         isActive = false;
     }
 
     /**
-     * Request scope injection binder.
+     * Configurator which initializes and register {@link RequestScope} instance int {@link InjectionManager} and
+     * {@link BootstrapBag}.
+     *
+     * @author Petr Bouda (petr.bouda at oracle.com)
      */
-    public static class Binder extends AbstractBinder {
+    public static class RequestScopeConfigurator implements BootstrapConfigurator {
 
         @Override
-        protected void configure() {
-            bind(new RequestScope()).to(RequestScope.class);
+        public void init(InjectionManager injectionManagerFactory, BootstrapBag bootstrapBag) {
+            bootstrapBag.setRequestScope(new RequestScope());
+            injectionManagerFactory.register(Bindings.service(bootstrapBag.getRequestScope()).to(RequestScope.class));
         }
     }
 
@@ -224,7 +190,7 @@ public class RequestScope implements Context<RequestScoped> {
         return current().getReference();
     }
 
-    private Instance current() {
+    public Instance current() {
         checkState(isActive, "Request scope has been already shut down.");
 
         final Instance scopeInstance = currentScopeInstance.get();
@@ -461,14 +427,14 @@ public class RequestScope implements Context<RequestScoped> {
         /**
          * A map of injectable instances in this scope.
          */
-        private final Map<ActiveDescriptor<?>, Object> store;
+        private final Map<ForeignDescriptor, Object> store;
         /**
          * Holds the number of snapshots of this scope.
          */
         private final AtomicInteger referenceCounter;
 
         private Instance() {
-            this.store = new HashMap<ActiveDescriptor<?>, Object>();
+            this.store = new HashMap<>();
             this.referenceCounter = new AtomicInteger(1);
         }
 
@@ -494,7 +460,7 @@ public class RequestScope implements Context<RequestScoped> {
          * @return matched inhabitant stored in the scope instance or {@code null} if not matched.
          */
         @SuppressWarnings("unchecked")
-        <T> T get(ActiveDescriptor<T> descriptor) {
+        public <T> T get(ForeignDescriptor descriptor) {
             return (T) store.get(descriptor);
         }
 
@@ -508,7 +474,7 @@ public class RequestScope implements Context<RequestScoped> {
          *         {@code null} if none stored.
          */
         @SuppressWarnings("unchecked")
-        <T> T put(ActiveDescriptor<T> descriptor, T value) {
+        public <T> T put(ForeignDescriptor descriptor, T value) {
             checkState(!store.containsKey(descriptor),
                     "An instance for the descriptor %s was already seeded in this scope. Old instance: %s New instance: %s",
                     descriptor,
@@ -524,14 +490,14 @@ public class RequestScope implements Context<RequestScoped> {
          * @param descriptor key for the value to be removed.
          */
         @SuppressWarnings("unchecked")
-        <T> void remove(ActiveDescriptor<T> descriptor) {
+        public <T> void remove(ForeignDescriptor descriptor) {
             final T removed = (T) store.remove(descriptor);
             if (removed != null) {
                 descriptor.dispose(removed);
             }
         }
 
-        private <T> boolean contains(ActiveDescriptor<T> provider) {
+        public boolean contains(ForeignDescriptor provider) {
             return store.containsKey(provider);
         }
 
