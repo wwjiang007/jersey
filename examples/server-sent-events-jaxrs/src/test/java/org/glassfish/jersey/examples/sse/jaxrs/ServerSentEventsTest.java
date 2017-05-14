@@ -42,21 +42,25 @@ package org.glassfish.jersey.examples.sse.jaxrs;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.CountDownLatch;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.atomic.AtomicReference;
 
+import javax.ws.rs.client.Client;
+import javax.ws.rs.client.ClientBuilder;
 import javax.ws.rs.client.Entity;
 import javax.ws.rs.client.WebTarget;
 import javax.ws.rs.core.Application;
 import javax.ws.rs.core.Response;
 import javax.ws.rs.sse.SseEventSource;
 
+import org.glassfish.jersey.internal.guava.ThreadFactoryBuilder;
 import org.glassfish.jersey.server.ResourceConfig;
 import org.glassfish.jersey.test.JerseyTest;
 
 import org.junit.Test;
-
 import static org.hamcrest.CoreMatchers.equalTo;
 import static org.hamcrest.CoreMatchers.notNullValue;
 import static org.junit.Assert.assertThat;
@@ -71,10 +75,26 @@ import static org.junit.Assert.assertTrue;
  */
 public class ServerSentEventsTest extends JerseyTest {
 
+    private final ExecutorService executorService =
+            Executors.newCachedThreadPool(new ThreadFactoryBuilder().setNameFormat("ServerSentEventsTest-%d").build());
+    private final Client client = ClientBuilder.newBuilder().executorService(executorService).build();
+
     @Override
     protected Application configure() {
         // enable(TestProperties.LOG_TRAFFIC);
         return new ResourceConfig(JaxRsServerSentEventsResource.class, DomainResource.class);
+    }
+
+    @Override
+    protected Client getClient() {
+        return client;
+    }
+
+    @Override
+    public void tearDown() throws Exception {
+        super.tearDown();
+        client.close();
+        executorService.shutdown();
     }
 
     /**
@@ -88,7 +108,7 @@ public class ServerSentEventsTest extends JerseyTest {
         final CountDownLatch latch = new CountDownLatch(1);
         final AtomicReference<String> message = new AtomicReference<>();
         final SseEventSource eventSource = SseEventSource.target(target().path(App.ROOT_PATH)).build();
-        eventSource.subscribe((inboundEvent) -> {
+        eventSource.register((inboundEvent) -> {
             final String value = inboundEvent.readData();
             message.set(value);
             latch.countDown();
@@ -135,7 +155,7 @@ public class ServerSentEventsTest extends JerseyTest {
             final AtomicInteger messageCount = new AtomicInteger(0);  // will this work?
             final int id = i;
             sources[id] = SseEventSource.target(sseTarget).build();
-            sources[id].subscribe((event) -> {
+            sources[id].register((event) -> {
                 messageCount.incrementAndGet();
                 final String message = event.readData(String.class);
                 if ("done".equals(message)) {

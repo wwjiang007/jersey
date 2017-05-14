@@ -59,7 +59,7 @@ import javax.ws.rs.sse.SseEventSink;
 @Path("server-sent-events")
 public class JaxRsServerSentEventsResource {
 
-    private static SseEventSink eventSink = null;
+    private static volatile SseEventSink eventSink = null;
 
     @GET
     @Produces(MediaType.SERVER_SENT_EVENTS)
@@ -69,12 +69,18 @@ public class JaxRsServerSentEventsResource {
 
     @POST
     public void addMessage(final String message, @Context Sse sse) throws IOException {
-        eventSink.onNext(sse.newEventBuilder().name("custom-message").data(String.class, message).build());
+        final SseEventSink localSink = eventSink;
+        if (localSink != null) {
+            localSink.send(sse.newEventBuilder().name("custom-message").data(String.class, message).build());
+        }
     }
 
     @DELETE
     public void close() throws IOException {
-        eventSink.close();
+        final SseEventSink localSink = eventSink;
+        if (localSink != null) {
+            eventSink.close();
+        }
         eventSink = null;
     }
 
@@ -84,20 +90,20 @@ public class JaxRsServerSentEventsResource {
     public void startDomain(@PathParam("id") final String id, @Context SseEventSink domainSink, @Context Sse sse) {
         new Thread(() -> {
             try {
-                domainSink.onNext(sse.newEventBuilder()
+                domainSink.send(sse.newEventBuilder()
                                     .name("domain-progress")
                                     .data(String.class, "starting domain " + id + " ...")
                                     .build());
                 Thread.sleep(200);
-                domainSink.onNext(sse.newEventBuilder().name("domain-progress").data(String.class, "50%").build());
+                domainSink.send(sse.newEventBuilder().name("domain-progress").data(String.class, "50%").build());
                 Thread.sleep(200);
-                domainSink.onNext(sse.newEventBuilder().name("domain-progress").data(String.class, "60%").build());
+                domainSink.send(sse.newEventBuilder().name("domain-progress").data(String.class, "60%").build());
                 Thread.sleep(200);
-                domainSink.onNext(sse.newEventBuilder().name("domain-progress").data(String.class, "70%").build());
+                domainSink.send(sse.newEventBuilder().name("domain-progress").data(String.class, "70%").build());
                 Thread.sleep(200);
-                domainSink.onNext(sse.newEventBuilder().name("domain-progress").data(String.class, "99%").build());
+                domainSink.send(sse.newEventBuilder().name("domain-progress").data(String.class, "99%").build());
                 Thread.sleep(200);
-                domainSink.onNext(sse.newEventBuilder().name("domain-progress").data(String.class, "done").build());
+                domainSink.send(sse.newEventBuilder().name("domain-progress").data(String.class, "done").build());
                 domainSink.close();
 
             } catch (final InterruptedException e) {

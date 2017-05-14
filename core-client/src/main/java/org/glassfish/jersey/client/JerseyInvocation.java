@@ -68,7 +68,6 @@ import javax.ws.rs.client.CompletionStageRxInvoker;
 import javax.ws.rs.client.Entity;
 import javax.ws.rs.client.Invocation;
 import javax.ws.rs.client.InvocationCallback;
-import javax.ws.rs.client.NioInvoker;
 import javax.ws.rs.client.ResponseProcessingException;
 import javax.ws.rs.client.RxInvoker;
 import javax.ws.rs.client.RxInvokerProvider;
@@ -88,6 +87,7 @@ import org.glassfish.jersey.internal.util.Producer;
 import org.glassfish.jersey.internal.util.PropertiesHelper;
 import org.glassfish.jersey.internal.util.ReflectionHelper;
 import org.glassfish.jersey.process.internal.RequestScope;
+import org.glassfish.jersey.spi.ExecutorServiceProvider;
 
 /**
  * Jersey implementation of {@link javax.ws.rs.client.Invocation JAX-RS client-side
@@ -129,6 +129,7 @@ public class JerseyInvocation implements javax.ws.rs.client.Invocation {
         map.put("GET", EntityPresence.MUST_BE_NULL);
         map.put("HEAD", EntityPresence.MUST_BE_NULL);
         map.put("OPTIONS", EntityPresence.MUST_BE_NULL);
+        map.put("PATCH", EntityPresence.MUST_BE_PRESENT);
         map.put("POST", EntityPresence.OPTIONAL); // we allow to post null instead of entity
         map.put("PUT", EntityPresence.MUST_BE_PRESENT);
         map.put("TRACE", EntityPresence.MUST_BE_NULL);
@@ -412,6 +413,21 @@ public class JerseyInvocation implements javax.ws.rs.client.Invocation {
         }
 
         @Override
+        public Response patch(final Entity<?> entity) {
+            return method("PATCH", entity);
+        }
+
+        @Override
+        public <T> T patch(final Entity<?> entity, Class<T> responseType) {
+            return method("PATCH", entity, responseType);
+        }
+
+        @Override
+        public <T> T patch(final Entity<?> entity, GenericType<T> responseType) {
+            return method("PATCH", entity, responseType);
+        }
+
+        @Override
         public Response method(final String name) throws ProcessingException {
             requestContext.setMethod(name);
             return new JerseyInvocation(this).invoke();
@@ -473,21 +489,21 @@ public class JerseyInvocation implements javax.ws.rs.client.Invocation {
 
         @Override
         public CompletionStageRxInvoker rx() {
-            return new JerseyCompletionStageRxInvoker(this, null);
-        }
+            ExecutorServiceProvider instance = this.requestContext.getInjectionManager()
+                                                                  .getInstance(ExecutorServiceProvider.class);
 
-        @Override
-        public CompletionStageRxInvoker rx(ExecutorService executorService) {
-            return new JerseyCompletionStageRxInvoker(this, executorService);
+            return new JerseyCompletionStageRxInvoker(this, instance.getExecutorService());
         }
 
         @Override
         public <T extends RxInvoker> T rx(Class<T> clazz) {
-            return createRxInvoker(clazz, null);
+            ExecutorServiceProvider instance = this.requestContext.getInjectionManager()
+                                                                  .getInstance(ExecutorServiceProvider.class);
+
+            return createRxInvoker(clazz, instance.getExecutorService());
         }
 
-        @Override
-        public <T extends RxInvoker> T rx(Class<T> clazz, ExecutorService executorService) {
+        private <T extends RxInvoker> T rx(Class<T> clazz, ExecutorService executorService) {
             if (executorService == null) {
                 throw new IllegalArgumentException(LocalizationMessages.NULL_INPUT_PARAMETER("executorService"));
             }
@@ -532,12 +548,6 @@ public class JerseyInvocation implements javax.ws.rs.client.Invocation {
 
             throw new IllegalStateException(
                     LocalizationMessages.CLIENT_RX_PROVIDER_NOT_REGISTERED(clazz.getSimpleName()));
-        }
-
-        @Override
-        public NioInvoker nio() {
-            // TODO JAX-RS 2.1: to be implemented
-            throw new UnsupportedOperationException("TODO JAX-RS 2.1: to be implemented");
         }
     }
 
@@ -678,6 +688,27 @@ public class JerseyInvocation implements javax.ws.rs.client.Invocation {
         @Override
         public <T> Future<T> trace(final InvocationCallback<T> callback) {
             return method("TRACE", callback);
+        }
+
+        @Override
+        public Future<Response> patch(final Entity<?> entity) {
+            return method("PATCH", entity);
+        }
+
+        @Override
+        public <T> Future<T> patch(final Entity<?> entity, Class<T> responseType) {
+            return method("PATCH", entity, responseType);
+
+        }
+
+        @Override
+        public <T> Future<T> patch(final Entity<?> entity, GenericType<T> responseType) {
+            return method("PATCH", entity, responseType);
+        }
+
+        @Override
+        public <T> Future<T> patch(final Entity<?> entity, InvocationCallback<T> callback) {
+            return method("PATCH", entity, callback);
         }
 
         @Override
