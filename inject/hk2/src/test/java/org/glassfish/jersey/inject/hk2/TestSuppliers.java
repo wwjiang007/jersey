@@ -1,7 +1,7 @@
 /*
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS HEADER.
  *
- * Copyright (c) 2014-2017 Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2017 Oracle and/or its affiliates. All rights reserved.
  *
  * The contents of this file are subject to the terms of either the GNU
  * General Public License Version 2 only ("GPL") or the Common Development
@@ -37,58 +37,45 @@
  * only if the new code is made subject to such option by the copyright
  * holder.
  */
-package org.glassfish.jersey.internal.inject;
+
+package org.glassfish.jersey.inject.hk2;
 
 import java.util.function.Supplier;
 
-import javax.inject.Provider;
-
-import org.glassfish.jersey.internal.util.collection.Ref;
+import javax.inject.Inject;
+import javax.inject.Named;
 
 /**
- * An abstract injection factory that provides injection of an instance of target type {@code T}
- * by {@link org.glassfish.jersey.internal.inject.ReferenceTransformingFactory.Transformer transforming}
- * a value of injected source reference {@link org.glassfish.jersey.internal.util.collection.Ref Ref&lt;S&gt;}.
- *
- * @author Marek Potociar (marek.potociar at oracle.com)
- *
- * @param <S> the type of the injected source type {@link Ref reference}.
- * @param <T> the type of provided entity.
+ * Set of suppliers to inject.
  */
-public abstract class ReferenceTransformingFactory<S, T> implements Supplier<T> {
-    /**
-     * Transforming function responsible for transforming an instance of source type {@code S} into an instance of
-     * target type {@code T}.
-     *
-     * @param <S> source type.
-     * @param <T> target type.
-     */
-    public interface Transformer<S, T> {
-        /**
-         * Transform an instance of source type into an instance of target type.
-         *
-         * @param value instance of source type.
-         * @return instance of target type.
-         */
-        T transform(S value);
+public class TestSuppliers {
+
+    static final String TEST = "Test";
+    static final String OTHER_TEST = "OtherTest";
+
+    public static class TargetSupplierBean {
+        @Inject
+        @Named(OTHER_TEST)
+        public String obj;
     }
 
-    private final Provider<Ref<S>> refProvider;
-    private final Transformer<S, T> transformer;
-
-    /**
-     * Initialize reference transforming factory.
-     *
-     * @param refProvider source type reference provider.
-     * @param transformer source to target type transforming function.
-     */
-    protected ReferenceTransformingFactory(final Provider<Ref<S>> refProvider, final Transformer<S, T> transformer) {
-        this.refProvider = refProvider;
-        this.transformer = transformer;
+    public static class TargetSupplier {
+        @Inject
+        @Named(OTHER_TEST)
+        public Supplier<String> supplier;
     }
 
-    @Override
-    public T get() {
-        return transformer.transform(refProvider.get().get());
+    public static class TestSupplier implements Supplier<String> {
+        @Override
+        public String get() {
+            return TEST;
+        }
+    }
+
+    public static class OtherTestSupplier implements Supplier<String> {
+        @Override
+        public String get() {
+            return OTHER_TEST;
+        }
     }
 }

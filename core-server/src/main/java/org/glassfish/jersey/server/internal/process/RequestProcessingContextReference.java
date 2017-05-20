@@ -1,7 +1,7 @@
 /*
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS HEADER.
  *
- * Copyright (c) 2012-2017 Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2017 Oracle and/or its affiliates. All rights reserved.
  *
  * The contents of this file are subject to the terms of either the GNU
  * General Public License Version 2 only ("GPL") or the Common Development
@@ -40,51 +40,28 @@
 
 package org.glassfish.jersey.server.internal.process;
 
-import java.util.function.Function;
-
-import javax.inject.Provider;
-
-import org.glassfish.jersey.internal.inject.InjectionManager;
-import org.glassfish.jersey.server.spi.RequestScopedInitializer;
+import org.glassfish.jersey.internal.util.collection.Ref;
+import org.glassfish.jersey.process.internal.RequestScoped;
 
 /**
- * Request/response scoped injection support initialization stage.
+ * Wrapper that holds the reference of the {@link RequestProcessingContext}. This class helps to get the current request scoped
+ * object without wrapping using the proxy. Outer wrapper can be proxied but inner reference object still remains the direct
+ * reference.
  *
- * @author Marek Potociar (marek.potociar at oracle.com)
+ * @author Petr Bouda (petr.bouda at oracle.com)
  */
-public final class ReferencesInitializer implements Function<RequestProcessingContext, RequestProcessingContext> {
+@RequestScoped
+public class RequestProcessingContextReference implements Ref<RequestProcessingContext> {
 
-    private final InjectionManager injectionManager;
-    private final Provider<RequestProcessingContextReference> processingContextRefProvider;
+    private RequestProcessingContext processingContext;
 
-    /**
-     * Injection constructor.
-     *
-     * @param injectionManager application injection manager.
-     * @param processingContextRefProvider container request reference provider (request-scoped).
-     */
-    public ReferencesInitializer(
-            InjectionManager injectionManager, Provider<RequestProcessingContextReference> processingContextRefProvider) {
-        this.injectionManager = injectionManager;
-        this.processingContextRefProvider = processingContextRefProvider;
+    @Override
+    public void set(RequestProcessingContext processingContext) {
+        this.processingContext = processingContext;
     }
 
-    /**
-     * Initialize the request references using the incoming request processing context.
-     *
-     *
-     * @param context incoming request context.
-     * @return same (unmodified) request context.
-     */
     @Override
-    public RequestProcessingContext apply(final RequestProcessingContext context) {
-        processingContextRefProvider.get().set(context);
-
-        final RequestScopedInitializer requestScopedInitializer = context.request().getRequestScopedInitializer();
-        if (requestScopedInitializer != null) {
-            requestScopedInitializer.initialize(injectionManager);
-        }
-
-        return context;
+    public RequestProcessingContext get() {
+        return processingContext;
     }
 }
