@@ -37,64 +37,31 @@
  * only if the new code is made subject to such option by the copyright
  * holder.
  */
-package org.glassfish.jersey.jsonb;
 
-import javax.ws.rs.core.Configuration;
-import javax.ws.rs.core.Feature;
+package org.glassfish.jersey.jsonb.internal;
+
 import javax.ws.rs.core.FeatureContext;
 
-import org.glassfish.jersey.CommonProperties;
-import org.glassfish.jersey.internal.InternalProperties;
-import org.glassfish.jersey.internal.util.PropertiesHelper;
-import org.glassfish.jersey.jsonb.internal.JsonbProvider;
+import javax.annotation.Priority;
+
+import org.glassfish.jersey.internal.spi.AutoDiscoverable;
+import org.glassfish.jersey.internal.spi.ForcedAutoDiscoverable;
+import org.glassfish.jersey.jsonb.JsonBindingFeature;
 
 /**
- * Feature used to register Jackson JSON providers.
+ * {@link ForcedAutoDiscoverable} registering {@link JsonBindingFeature} if the feature is not already registered.
  * <p>
- * The Feature is automatically enabled when {@link org.glassfish.jersey.jsonb.internal.JsonbAutoDiscoverable} is on classpath.
- * Default JSON-B configuration obtained by calling {@code JsonbBuilder.create()} is used.
- * <p>
- * Custom configuration, if required, can be achieved by implementing custom {@link javax.ws.rs.ext.ContextResolver} and
- * registering it as a provider into JAX-RS runtime:
- * <pre>
- * &#64;Provider
- * &#64;class JsonbContextResolver implements ContextResolver&lt;Jsonb&gt; {
- *      &#64;Override
- *      public Jsonb getContext(Class<?> type) {
- *          JsonbConfig config = new JsonbConfig();
- *          // add custom configuration
- *          return JsonbBuilder.create(config);
- *      }
- * }
- * </pre>
  *
  * @author Adam Lindenthal (adam.lindenthal at oracle.com)
+ * @see JsonBindingFeature
  */
-public class JsonbFeature implements Feature {
-
-    private static final String JSON_FEATURE = JsonbFeature.class.getSimpleName();
+@Priority(AutoDiscoverable.DEFAULT_PRIORITY - 200)
+public class JsonBindingAutoDiscoverable implements ForcedAutoDiscoverable {
 
     @Override
-    public boolean configure(final FeatureContext context) {
-        final Configuration config = context.getConfiguration();
-
-        final String jsonFeature = CommonProperties.getValue(
-                config.getProperties(),
-                config.getRuntimeType(),
-                InternalProperties.JSON_FEATURE, JSON_FEATURE, String.class);
-
-        // Other JSON providers registered.
-        if (!JSON_FEATURE.equalsIgnoreCase(jsonFeature)) {
-            return false;
+    public void configure(final FeatureContext context) {
+        if (!context.getConfiguration().isRegistered(JsonBindingFeature.class)) {
+            context.register(JsonBindingFeature.class);
         }
-
-        // Disable other JSON providers.
-        context.property(PropertiesHelper.getPropertyNameForRuntime(
-                InternalProperties.JSON_FEATURE, config.getRuntimeType()), JSON_FEATURE);
-
-        context.register(JsonbProvider.class);
-
-
-        return true;
     }
 }

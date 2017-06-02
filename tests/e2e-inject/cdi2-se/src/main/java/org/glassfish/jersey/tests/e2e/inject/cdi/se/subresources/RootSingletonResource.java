@@ -38,30 +38,21 @@
  * holder.
  */
 
-package org.glassfish.jersey.jsonb.internal;
+package org.glassfish.jersey.tests.e2e.inject.cdi.se.subresources;
 
-import javax.ws.rs.core.FeatureContext;
+import javax.ws.rs.GET;
+import javax.ws.rs.Path;
 
-import javax.annotation.Priority;
+import javax.inject.Singleton;
 
-import org.glassfish.jersey.internal.spi.AutoDiscoverable;
-import org.glassfish.jersey.internal.spi.ForcedAutoDiscoverable;
-import org.glassfish.jersey.jsonb.JsonbFeature;
+@Path("root-singleton")
+@Singleton
+public class RootSingletonResource {
 
-/**
- * {@link ForcedAutoDiscoverable} registering {@link JsonbFeature} if the feature is not already registered.
- * <p>
- *
- * @author Adam Lindenthal (adam.lindenthal at oracle.com)
- * @see JsonbFeature
- */
-@Priority(AutoDiscoverable.DEFAULT_PRIORITY - 200)
-public class JsonbAutoDiscoverable implements ForcedAutoDiscoverable {
+    private int counter = 0;
 
-    @Override
-    public void configure(final FeatureContext context) {
-        if (!context.getConfiguration().isRegistered(JsonbFeature.class)) {
-            context.register(JsonbFeature.class);
-        }
+    @GET
+    public String get() {
+        return "RootSingletonResource:" + String.valueOf(counter++);
     }
 }
