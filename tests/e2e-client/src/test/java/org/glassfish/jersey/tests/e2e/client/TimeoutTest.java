@@ -8,12 +8,12 @@
  * and Distribution License("CDDL") (collectively, the "License").  You
  * may not use this file except in compliance with the License.  You can
  * obtain a copy of the License at
- * http://glassfish.java.net/public/CDDL+GPL_1_1.html
- * or packager/legal/LICENSE.txt.  See the License for the specific
+ * https://oss.oracle.com/licenses/CDDL+GPL-1.1
+ * or LICENSE.txt.  See the License for the specific
  * language governing permissions and limitations under the License.
  *
  * When distributing the software, include this License Header Notice in each
- * file and include the License file at packager/legal/LICENSE.txt.
+ * file and include the License file at LICENSE.txt.
  *
  * GPL Classpath Exception:
  * Oracle designates this particular file as subject to the "Classpath"
@@ -40,7 +40,7 @@
 
 package org.glassfish.jersey.tests.e2e.client;
 
-import java.net.SocketTimeoutException;
+import java.io.IOException;
 
 import javax.ws.rs.GET;
 import javax.ws.rs.Path;
@@ -54,6 +54,7 @@ import org.glassfish.jersey.server.ResourceConfig;
 import org.glassfish.jersey.test.JerseyTest;
 
 import org.junit.Test;
+
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.fail;
 
@@ -103,7 +104,7 @@ public class TimeoutTest extends JerseyTest {
             target("test/timeout").request().get();
             fail("Timeout expected.");
         } catch (ProcessingException e) {
-            if (!(e.getCause() instanceof SocketTimeoutException)) {
+            if (!(e.getCause() instanceof IOException)) {
                 e.printStackTrace();
                 fail();
             }

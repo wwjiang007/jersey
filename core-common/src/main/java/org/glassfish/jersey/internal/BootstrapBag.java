@@ -8,12 +8,12 @@
  * and Distribution License("CDDL") (collectively, the "License").  You
  * may not use this file except in compliance with the License.  You can
  * obtain a copy of the License at
- * http://glassfish.java.net/public/CDDL+GPL_1_1.html
- * or packager/legal/LICENSE.txt.  See the License for the specific
+ * https://oss.oracle.com/licenses/CDDL+GPL-1.1
+ * or LICENSE.txt.  See the License for the specific
  * language governing permissions and limitations under the License.
  *
  * When distributing the software, include this License Header Notice in each
- * file and include the License file at packager/legal/LICENSE.txt.
+ * file and include the License file at LICENSE.txt.
  *
  * GPL Classpath Exception:
  * Oracle designates this particular file as subject to the "Classpath"
@@ -58,7 +58,7 @@ import org.glassfish.jersey.spi.ExceptionMappers;
  * bootstrap. This works as a replacement of an injection framework during a bootstrap and intentionally keeps all needed types in
  * separate fields to make strong type nature and to preserve a clear view which types are needed to inject to other services.
  *
- * @author Petr Bouda (petr.bouda at oracle.com)
+ * @author Petr Bouda
  */
 public class BootstrapBag {
 

@@ -1,19 +1,19 @@
 /*
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS HEADER.
  *
- * Copyright (c) 2010-2015 Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2010-2017 Oracle and/or its affiliates. All rights reserved.
  *
  * The contents of this file are subject to the terms of either the GNU
  * General Public License Version 2 only ("GPL") or the Common Development
  * and Distribution License("CDDL") (collectively, the "License").  You
  * may not use this file except in compliance with the License.  You can
  * obtain a copy of the License at
- * http://glassfish.java.net/public/CDDL+GPL_1_1.html
- * or packager/legal/LICENSE.txt.  See the License for the specific
+ * https://oss.oracle.com/licenses/CDDL+GPL-1.1
+ * or LICENSE.txt.  See the License for the specific
  * language governing permissions and limitations under the License.
  *
  * When distributing the software, include this License Header Notice in each
- * file and include the License file at packager/legal/LICENSE.txt.
+ * file and include the License file at LICENSE.txt.
  *
  * GPL Classpath Exception:
  * Oracle designates this particular file as subject to the "Classpath"
@@ -37,6 +37,7 @@
  * only if the new code is made subject to such option by the copyright
  * holder.
  */
+
 package org.glassfish.jersey.linking;
 
 import java.lang.annotation.ElementType;
@@ -65,7 +66,7 @@ public @interface InjectLink {
     /**
      * Styles of URI supported
      */
-    public enum Style {
+    enum Style {
 
         /**
          * An absolute URI. The URI template will be prefixed with the absolute
@@ -198,7 +199,7 @@ public @interface InjectLink {
 
     @Target({ElementType.TYPE, ElementType.FIELD})
     @Retention(RetentionPolicy.RUNTIME)
-    public @interface Extension {
+    @interface Extension {
 
         /**
          * Specifies the name of the extension parameter
@@ -211,30 +212,30 @@ public @interface InjectLink {
         String value();
     }
 
-    public static class Util {
+    class Util {
 
         public static Link buildLinkFromUri(URI uri, InjectLink link) {
 
             javax.ws.rs.core.Link.Builder builder = javax.ws.rs.core.Link.fromUri(uri);
-            if (link.rel().length() != 0) {
+            if (!link.rel().isEmpty()) {
                 builder = builder.rel(link.rel());
             }
-            if (link.rev().length() != 0) {
+            if (!link.rev().isEmpty()) {
                 builder = builder.param("rev", link.rev());
             }
-            if (link.type().length() != 0) {
+            if (!link.type().isEmpty()) {
                 builder = builder.type(link.type());
             }
-            if (link.title().length() != 0) {
+            if (!link.title().isEmpty()) {
                 builder = builder.param("title", link.title());
             }
-            if (link.anchor().length() != 0) {
+            if (!link.anchor().isEmpty()) {
                 builder = builder.param("anchor", link.anchor());
             }
-            if (link.media().length() != 0) {
+            if (!link.media().isEmpty()) {
                 builder = builder.param("media", link.media());
             }
-            if (link.hreflang().length() != 0) {
+            if (!link.hreflang().isEmpty()) {
                 builder = builder.param("hreflang", link.hreflang());
             }
             for (InjectLink.Extension ext : link.extensions()) {

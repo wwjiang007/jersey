@@ -8,12 +8,12 @@
  * and Distribution License("CDDL") (collectively, the "License").  You
  * may not use this file except in compliance with the License.  You can
  * obtain a copy of the License at
- * http://glassfish.java.net/public/CDDL+GPL_1_1.html
- * or packager/legal/LICENSE.txt.  See the License for the specific
+ * https://oss.oracle.com/licenses/CDDL+GPL-1.1
+ * or LICENSE.txt.  See the License for the specific
  * language governing permissions and limitations under the License.
  *
  * When distributing the software, include this License Header Notice in each
- * file and include the License file at packager/legal/LICENSE.txt.
+ * file and include the License file at LICENSE.txt.
  *
  * GPL Classpath Exception:
  * Oracle designates this particular file as subject to the "Classpath"
@@ -37,6 +37,7 @@
  * only if the new code is made subject to such option by the copyright
  * holder.
  */
+
 package org.glassfish.jersey.tests.e2e.entity;
 
 import org.glassfish.jersey.server.ResourceConfig;
@@ -60,8 +61,12 @@ public class ParameterTypeArgumentResourceReaderWriterOrderTest extends Abstract
 
     @Test
     public void testClassResource() {
-        assertEquals("AA", target().path("a").request().get(String.class));
-        assertEquals("BB", target().path("b").request().get(String.class));
-        assertEquals("CC", target().path("c").request().get(String.class));
+        // NOTE: HttpUrlConnector sends several accepted types by default when not explicitly set by the caller.
+        // In such case, the .accept("text/html") call is not necessary. However, other connectors act in a different way and
+        // this leads in different behaviour when selecting the MessageBodyWriter. Leaving the definition explicit for broader
+        // compatibility.
+        assertEquals("AA", target().path("a").request("text/html").get(String.class));
+        assertEquals("BB", target().path("b").request("text/html").get(String.class));
+        assertEquals("CC", target().path("c").request("text/html").get(String.class));
     }
 }

@@ -1,19 +1,19 @@
 /*
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS HEADER.
  *
- * Copyright (c) 2010-2015 Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2010-2017 Oracle and/or its affiliates. All rights reserved.
  *
  * The contents of this file are subject to the terms of either the GNU
  * General Public License Version 2 only ("GPL") or the Common Development
  * and Distribution License("CDDL") (collectively, the "License").  You
  * may not use this file except in compliance with the License.  You can
  * obtain a copy of the License at
- * http://glassfish.java.net/public/CDDL+GPL_1_1.html
- * or packager/legal/LICENSE.txt.  See the License for the specific
+ * https://oss.oracle.com/licenses/CDDL+GPL-1.1
+ * or LICENSE.txt.  See the License for the specific
  * language governing permissions and limitations under the License.
  *
  * When distributing the software, include this License Header Notice in each
- * file and include the License file at packager/legal/LICENSE.txt.
+ * file and include the License file at LICENSE.txt.
  *
  * GPL Classpath Exception:
  * Oracle designates this particular file as subject to the "Classpath"
@@ -61,7 +61,7 @@ class HeaderProcessor<T> {
 
     private EntityDescriptor instanceDescriptor;
 
-    public HeaderProcessor(Class<T> c) {
+    HeaderProcessor(Class<T> c) {
         instanceDescriptor = EntityDescriptor.getInstance(c);
     }
 
@@ -71,10 +71,10 @@ class HeaderProcessor<T> {
      * @param uriInfo the uriInfo for the request
      * @param headers the map into which the headers will be added
      */
-    public void processLinkHeaders(T entity,
-                                   UriInfo uriInfo,
-                                   ResourceMappingContext rmc,
-                                   MultivaluedMap<String, Object> headers) {
+    void processLinkHeaders(T entity,
+                            UriInfo uriInfo,
+                            ResourceMappingContext rmc,
+                            MultivaluedMap<String, Object> headers) {
         List<String> headerValues = getLinkHeaderValues(entity, uriInfo, rmc);
         for (String headerValue : headerValues) {
             headers.add("Link", headerValue);
@@ -100,8 +100,8 @@ class HeaderProcessor<T> {
         return Collections.emptyList();
     }
 
-    static String getLinkHeaderValue(LinkHeaderDescriptor desc, Object entity, Object resource, UriInfo uriInfo,
-                                     ResourceMappingContext rmc) {
+    private static String getLinkHeaderValue(LinkHeaderDescriptor desc, Object entity, Object resource, UriInfo uriInfo,
+                                             ResourceMappingContext rmc) {
         URI uri = ELLinkBuilder.buildURI(desc, entity, resource, entity, uriInfo, rmc);
         InjectLink link = desc.getLinkHeader();
         return InjectLink.Util.buildLinkFromUri(uri, link).toString();

@@ -8,12 +8,12 @@
  * and Distribution License("CDDL") (collectively, the "License").  You
  * may not use this file except in compliance with the License.  You can
  * obtain a copy of the License at
- * http://glassfish.java.net/public/CDDL+GPL_1_1.html
- * or packager/legal/LICENSE.txt.  See the License for the specific
+ * https://oss.oracle.com/licenses/CDDL+GPL-1.1
+ * or LICENSE.txt.  See the License for the specific
  * language governing permissions and limitations under the License.
  *
  * When distributing the software, include this License Header Notice in each
- * file and include the License file at packager/legal/LICENSE.txt.
+ * file and include the License file at LICENSE.txt.
  *
  * GPL Classpath Exception:
  * Oracle designates this particular file as subject to the "Classpath"
@@ -117,7 +117,8 @@ public class ImplicitViewWithResourceFilterTest extends JerseyTest {
             assertEquals(1, xTest.size());
             assertEquals("two", xTest.get(0));
 
-            responseContext.getHeaders().add("X-TEST", "one");
+            assertNull(responseContext.getHeaders().get("Y-TEST"));
+            responseContext.getHeaders().add("Y-TEST", "one");
         }
     }
 
@@ -141,8 +142,8 @@ public class ImplicitViewWithResourceFilterTest extends JerseyTest {
             assertEquals("one", rxTest.get(0));
             assertEquals("two", rxTest.get(1));
 
-            List<Object> xTest = responseContext.getHeaders().get("X-TEST");
-            assertNull(xTest);
+            assertNull(responseContext.getHeaders().get("X-TEST"));
+            assertNull(responseContext.getHeaders().get("Y-TEST"));
 
             responseContext.getHeaders().add("X-TEST", "two");
         }
@@ -155,9 +156,12 @@ public class ImplicitViewWithResourceFilterTest extends JerseyTest {
         Response cr = request.get(Response.class);
         assertEquals(200, cr.getStatus());
         List<Object> xTest = cr.getMetadata().get("X-TEST");
-        assertEquals(2, xTest.size());
-        assertEquals("two", xTest.get(1));
-        assertEquals("one", xTest.get(0));
+        assertEquals(1, xTest.size());
+        assertEquals("two", xTest.get(0));
+
+        List<Object> yTest = cr.getMetadata().get("Y-TEST");
+        assertEquals(1, yTest.size());
+        assertEquals("one", yTest.get(0));
 
         Properties p = new Properties();
         p.load(cr.readEntity(InputStream.class));

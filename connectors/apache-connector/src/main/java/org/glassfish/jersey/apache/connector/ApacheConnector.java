@@ -8,12 +8,12 @@
  * and Distribution License("CDDL") (collectively, the "License").  You
  * may not use this file except in compliance with the License.  You can
  * obtain a copy of the License at
- * http://glassfish.java.net/public/CDDL+GPL_1_1.html
- * or packager/legal/LICENSE.txt.  See the License for the specific
+ * https://oss.oracle.com/licenses/CDDL+GPL-1.1
+ * or LICENSE.txt.  See the License for the specific
  * language governing permissions and limitations under the License.
  *
  * When distributing the software, include this License Header Notice in each
- * file and include the License file at packager/legal/LICENSE.txt.
+ * file and include the License file at LICENSE.txt.
  *
  * GPL Classpath Exception:
  * Oracle designates this particular file as subject to the "Classpath"
@@ -439,6 +439,14 @@ class ApacheConnector implements Connector {
                 authCache.put(getHost(request), basicScheme);
                 context.setAuthCache(authCache);
             }
+
+            // If a request-specific CredentialsProvider exists, use it instead of the default one
+            CredentialsProvider credentialsProvider =
+                    clientRequest.resolveProperty(ApacheClientProperties.CREDENTIALS_PROVIDER, CredentialsProvider.class);
+            if (credentialsProvider != null) {
+                context.setCredentialsProvider(credentialsProvider);
+            }
+
             response = client.execute(getHost(request), request, context);
             HeaderUtils.checkHeaderChanges(clientHeadersSnapshot, clientRequest.getHeaders(), this.getClass().getName());
 

@@ -8,12 +8,12 @@
  * and Distribution License("CDDL") (collectively, the "License").  You
  * may not use this file except in compliance with the License.  You can
  * obtain a copy of the License at
- * http://glassfish.java.net/public/CDDL+GPL_1_1.html
- * or packager/legal/LICENSE.txt.  See the License for the specific
+ * https://oss.oracle.com/licenses/CDDL+GPL-1.1
+ * or LICENSE.txt.  See the License for the specific
  * language governing permissions and limitations under the License.
  *
  * When distributing the software, include this License Header Notice in each
- * file and include the License file at packager/legal/LICENSE.txt.
+ * file and include the License file at LICENSE.txt.
  *
  * GPL Classpath Exception:
  * Oracle designates this particular file as subject to the "Classpath"
@@ -48,6 +48,8 @@ import javax.inject.Singleton;
 
 import org.glassfish.jersey.Beta;
 import org.glassfish.jersey.internal.inject.AbstractBinder;
+import org.glassfish.jersey.linking.contributing.NaiveResourceLinkContributionContext;
+import org.glassfish.jersey.linking.contributing.ResourceLinkContributionContext;
 import org.glassfish.jersey.linking.mapping.NaiveResourceMappingContext;
 import org.glassfish.jersey.linking.mapping.ResourceMappingContext;
 
@@ -57,7 +59,6 @@ import org.glassfish.jersey.linking.mapping.ResourceMappingContext;
  * @author Mark Hadley
  * @author Gerard Davison (gerard.davison at oracle.com)
  */
-
 @Beta
 public class DeclarativeLinkingFeature implements Feature {
 
@@ -72,6 +73,14 @@ public class DeclarativeLinkingFeature implements Feature {
                 protected void configure() {
                     bindAsContract(NaiveResourceMappingContext.class)
                             .to(ResourceMappingContext.class).in(Singleton.class);
+                }
+            });
+            context.register(new AbstractBinder() {
+
+                @Override
+                protected void configure() {
+                    bindAsContract(NaiveResourceLinkContributionContext.class)
+                            .to(ResourceLinkContributionContext.class).in(Singleton.class);
                 }
             });
 

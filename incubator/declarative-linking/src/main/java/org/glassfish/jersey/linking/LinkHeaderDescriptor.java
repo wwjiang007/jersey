@@ -1,19 +1,19 @@
 /*
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS HEADER.
  *
- * Copyright (c) 2010-2015 Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2010-2017 Oracle and/or its affiliates. All rights reserved.
  *
  * The contents of this file are subject to the terms of either the GNU
  * General Public License Version 2 only ("GPL") or the Common Development
  * and Distribution License("CDDL") (collectively, the "License").  You
  * may not use this file except in compliance with the License.  You can
  * obtain a copy of the License at
- * http://glassfish.java.net/public/CDDL+GPL_1_1.html
- * or packager/legal/LICENSE.txt.  See the License for the specific
+ * https://oss.oracle.com/licenses/CDDL+GPL-1.1
+ * or LICENSE.txt.  See the License for the specific
  * language governing permissions and limitations under the License.
  *
  * When distributing the software, include this License Header Notice in each
- * file and include the License file at packager/legal/LICENSE.txt.
+ * file and include the License file at LICENSE.txt.
  *
  * GPL Classpath Exception:
  * Oracle designates this particular file as subject to the "Classpath"
@@ -47,7 +47,7 @@ import org.glassfish.jersey.linking.InjectLink.Style;
 import org.glassfish.jersey.linking.mapping.ResourceMappingContext;
 
 /**
- * Utility class for working with {@link org.glassfish.jersey.linking.InjectLink} annotations
+ * Utility class for working with {@link org.glassfish.jersey.linking.InjectLink} annotations.
  *
  * @author Mark Hadley
  * @author Gerard Davison (gerard.davison at oracle.com)
@@ -59,13 +59,13 @@ class LinkHeaderDescriptor implements InjectLinkDescriptor {
 
     LinkHeaderDescriptor(InjectLink linkHeader) {
         this.linkHeader = linkHeader;
-        bindings = new HashMap<String, String>();
+        bindings = new HashMap<>();
         for (Binding binding : linkHeader.bindings()) {
             bindings.put(binding.name(), binding.value());
         }
     }
 
-    public InjectLink getLinkHeader() {
+    InjectLink getLinkHeader() {
         return linkHeader;
     }
 

@@ -10,12 +10,12 @@
     and Distribution License("CDDL") (collectively, the "License").  You
     may not use this file except in compliance with the License.  You can
     obtain a copy of the License at
-    http://glassfish.java.net/public/CDDL+GPL_1_1.html
-    or packager/legal/LICENSE.txt.  See the License for the specific
+    https://oss.oracle.com/licenses/CDDL+GPL-1.1
+    or LICENSE.txt.  See the License for the specific
     language governing permissions and limitations under the License.
 
     When distributing the software, include this License Header Notice in each
-    file and include the License file at packager/legal/LICENSE.txt.
+    file and include the License file at LICENSE.txt.
 
     GPL Classpath Exception:
     Oracle designates this particular file as subject to the "Classpath"
@@ -474,6 +474,8 @@
 <!ENTITY jersey.message.filtering.SecurityEntityFilteringFeature "<link xlink:href='&jersey.javadoc.uri.prefix;/message/filtering/SecurityEntityFilteringFeature.html'>SecurityEntityFilteringFeature</link>">
 <!ENTITY jersey.message.filtering.SelectableEntityFilteringFeature "<link xlink:href='&jersey.javadoc.uri.prefix;/message/filtering/SelectableEntityFilteringFeature.html'>SelectableEntityFilteringFeature</link>">
 <!ENTITY jersey.netty.NettyConnectorProvider "<link xlink:href='&jersey.javadoc.uri.prefix;/netty/connector/NettyConnectorProvider.html'>NettyConnectorProvider</link>">
+<!ENTITY jersey.jdk.JdkConnectorProvider
+        "<link xlink:href='&jersey.javadoc.uri.prefix;/jdk/connector/JdkConnectorProvider.html'>JdkConnectorProvider</link>">
 <!ENTITY jersey.server.ApplicationHandler "<link xlink:href='&jersey.javadoc.uri.prefix;/server/ApplicationHandler.html'>ApplicationHandler</link>">
 <!ENTITY jersey.server.BackgroundScheduler "<link xlink:href='&jersey.javadoc.uri.prefix;/server/BackgroundScheduler.html'>@BackgroundScheduler</link>">
 <!ENTITY jersey.server.BackgroundSchedulerLiteral "<link xlink:href='&jersey.javadoc.uri.prefix;/server/BackgroundSchedulerLiteral.html'>BackgroundSchedulerLiteral</link>">

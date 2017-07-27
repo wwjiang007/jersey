@@ -1,19 +1,19 @@
 /*
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS HEADER.
  *
- * Copyright (c) 2013-2015 Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2013-2017 Oracle and/or its affiliates. All rights reserved.
  *
  * The contents of this file are subject to the terms of either the GNU
  * General Public License Version 2 only ("GPL") or the Common Development
  * and Distribution License("CDDL") (collectively, the "License").  You
  * may not use this file except in compliance with the License.  You can
  * obtain a copy of the License at
- * http://glassfish.java.net/public/CDDL+GPL_1_1.html
- * or packager/legal/LICENSE.txt.  See the License for the specific
+ * https://oss.oracle.com/licenses/CDDL+GPL-1.1
+ * or LICENSE.txt.  See the License for the specific
  * language governing permissions and limitations under the License.
  *
  * When distributing the software, include this License Header Notice in each
- * file and include the License file at packager/legal/LICENSE.txt.
+ * file and include the License file at LICENSE.txt.
  *
  * GPL Classpath Exception:
  * Oracle designates this particular file as subject to the "Classpath"
@@ -37,12 +37,14 @@
  * only if the new code is made subject to such option by the copyright
  * holder.
  */
+
 package org.glassfish.jersey.client;
 
 import java.io.IOException;
 import java.security.KeyStore;
 import java.security.KeyStoreException;
 import java.security.NoSuchAlgorithmException;
+import java.util.concurrent.TimeUnit;
 
 import javax.ws.rs.client.Client;
 import javax.ws.rs.client.ClientBuilder;
@@ -56,7 +58,9 @@ import javax.annotation.Priority;
 import javax.net.ssl.SSLContext;
 
 import org.junit.Before;
+import org.junit.Rule;
 import org.junit.Test;
+import org.junit.rules.ExpectedException;
 import static org.hamcrest.CoreMatchers.equalTo;
 import static org.junit.Assert.assertNotSame;
 import static org.junit.Assert.assertSame;
@@ -70,6 +74,9 @@ import static org.junit.Assert.fail;
  * @author Michal Gajdos
  */
 public class JerseyClientBuilderTest {
+
+    @Rule
+    public final ExpectedException exception = ExpectedException.none();
 
     private JerseyClientBuilder builder;
 
@@ -223,5 +230,21 @@ public class JerseyClientBuilderTest {
 
         assertThat(response.getStatus(), equalTo(200));
         assertThat(response.readEntity(String.class), equalTo("ok"));
+    }
+
+    @Test
+    public void testNegativeConnectTimeout() {
+        ClientBuilder clientBuilder = ClientBuilder.newBuilder();
+
+        exception.expect(IllegalArgumentException.class);
+        clientBuilder.connectTimeout(-1, TimeUnit.SECONDS);
+    }
+
+    @Test
+    public void testNegativeReadTimeout() {
+        ClientBuilder clientBuilder = ClientBuilder.newBuilder();
+
+        exception.expect(IllegalArgumentException.class);
+        clientBuilder.readTimeout(-1, TimeUnit.SECONDS);
     }
 }

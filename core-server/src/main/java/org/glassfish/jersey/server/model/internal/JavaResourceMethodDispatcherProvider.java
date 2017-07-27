@@ -8,12 +8,12 @@
  * and Distribution License("CDDL") (collectively, the "License").  You
  * may not use this file except in compliance with the License.  You can
  * obtain a copy of the License at
- * http://glassfish.java.net/public/CDDL+GPL_1_1.html
- * or packager/legal/LICENSE.txt.  See the License for the specific
+ * https://oss.oracle.com/licenses/CDDL+GPL-1.1
+ * or LICENSE.txt.  See the License for the specific
  * language governing permissions and limitations under the License.
  *
  * When distributing the software, include this License Header Notice in each
- * file and include the License file at packager/legal/LICENSE.txt.
+ * file and include the License file at LICENSE.txt.
  *
  * GPL Classpath Exception:
  * Oracle designates this particular file as subject to the "Classpath"
@@ -40,6 +40,8 @@
 
 package org.glassfish.jersey.server.model.internal;
 
+import java.io.Flushable;
+import java.io.IOException;
 import java.lang.reflect.InvocationHandler;
 import java.lang.reflect.Type;
 import java.util.Collection;
@@ -155,6 +157,12 @@ class JavaResourceMethodDispatcherProvider implements ResourceMethodDispatcher.P
 
             if (eventSink == null) {
                 throw new IllegalArgumentException("SseEventSink parameter detected, but not found.");
+            } else if (eventSink instanceof Flushable) {
+                try {
+                    ((Flushable) eventSink).flush();
+                } catch (IOException e) {
+                    // ignore.
+                }
             }
             return Response.ok().entity(eventSink).build();
         }

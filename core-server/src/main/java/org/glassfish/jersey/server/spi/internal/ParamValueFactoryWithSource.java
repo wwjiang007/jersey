@@ -8,12 +8,12 @@
  * and Distribution License("CDDL") (collectively, the "License").  You
  * may not use this file except in compliance with the License.  You can
  * obtain a copy of the License at
- * http://glassfish.java.net/public/CDDL+GPL_1_1.html
- * or packager/legal/LICENSE.txt.  See the License for the specific
+ * https://oss.oracle.com/licenses/CDDL+GPL-1.1
+ * or LICENSE.txt.  See the License for the specific
  * language governing permissions and limitations under the License.
  *
  * When distributing the software, include this License Header Notice in each
- * file and include the License file at packager/legal/LICENSE.txt.
+ * file and include the License file at LICENSE.txt.
  *
  * GPL Classpath Exception:
  * Oracle designates this particular file as subject to the "Classpath"
@@ -37,6 +37,7 @@
  * only if the new code is made subject to such option by the copyright
  * holder.
  */
+
 package org.glassfish.jersey.server.spi.internal;
 
 import java.util.function.Function;
@@ -50,7 +51,7 @@ import org.glassfish.jersey.server.model.Parameter;
  * {@link org.glassfish.jersey.server.model.Parameter.Source} information.
  *
  * @param <T> This must be the type of entity for which this is a factory.
- * @author Petr Bouda (petr.bouda at oracle.com)
+ * @author Petr Bouda
  */
 public final class ParamValueFactoryWithSource<T> implements Function<ContainerRequest, T> {
 

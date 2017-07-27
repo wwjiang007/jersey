@@ -8,12 +8,12 @@
  * and Distribution License("CDDL") (collectively, the "License").  You
  * may not use this file except in compliance with the License.  You can
  * obtain a copy of the License at
- * http://glassfish.java.net/public/CDDL+GPL_1_1.html
- * or packager/legal/LICENSE.txt.  See the License for the specific
+ * https://oss.oracle.com/licenses/CDDL+GPL-1.1
+ * or LICENSE.txt.  See the License for the specific
  * language governing permissions and limitations under the License.
  *
  * When distributing the software, include this License Header Notice in each
- * file and include the License file at packager/legal/LICENSE.txt.
+ * file and include the License file at LICENSE.txt.
  *
  * GPL Classpath Exception:
  * Oracle designates this particular file as subject to the "Classpath"
@@ -37,6 +37,7 @@
  * only if the new code is made subject to such option by the copyright
  * holder.
  */
+
 package org.glassfish.jersey.client;
 
 import java.lang.reflect.Type;
@@ -413,21 +414,6 @@ public class JerseyInvocation implements javax.ws.rs.client.Invocation {
         }
 
         @Override
-        public Response patch(final Entity<?> entity) {
-            return method("PATCH", entity);
-        }
-
-        @Override
-        public <T> T patch(final Entity<?> entity, Class<T> responseType) {
-            return method("PATCH", entity, responseType);
-        }
-
-        @Override
-        public <T> T patch(final Entity<?> entity, GenericType<T> responseType) {
-            return method("PATCH", entity, responseType);
-        }
-
-        @Override
         public Response method(final String name) throws ProcessingException {
             requestContext.setMethod(name);
             return new JerseyInvocation(this).invoke();
@@ -688,27 +674,6 @@ public class JerseyInvocation implements javax.ws.rs.client.Invocation {
         @Override
         public <T> Future<T> trace(final InvocationCallback<T> callback) {
             return method("TRACE", callback);
-        }
-
-        @Override
-        public Future<Response> patch(final Entity<?> entity) {
-            return method("PATCH", entity);
-        }
-
-        @Override
-        public <T> Future<T> patch(final Entity<?> entity, Class<T> responseType) {
-            return method("PATCH", entity, responseType);
-
-        }
-
-        @Override
-        public <T> Future<T> patch(final Entity<?> entity, GenericType<T> responseType) {
-            return method("PATCH", entity, responseType);
-        }
-
-        @Override
-        public <T> Future<T> patch(final Entity<?> entity, InvocationCallback<T> callback) {
-            return method("PATCH", entity, callback);
         }
 
         @Override

@@ -8,12 +8,12 @@
  * and Distribution License("CDDL") (collectively, the "License").  You
  * may not use this file except in compliance with the License.  You can
  * obtain a copy of the License at
- * http://glassfish.java.net/public/CDDL+GPL_1_1.html
- * or packager/legal/LICENSE.txt.  See the License for the specific
+ * https://oss.oracle.com/licenses/CDDL+GPL-1.1
+ * or LICENSE.txt.  See the License for the specific
  * language governing permissions and limitations under the License.
  *
  * When distributing the software, include this License Header Notice in each
- * file and include the License file at packager/legal/LICENSE.txt.
+ * file and include the License file at LICENSE.txt.
  *
  * GPL Classpath Exception:
  * Oracle designates this particular file as subject to the "Classpath"
@@ -101,7 +101,6 @@ import org.glassfish.jersey.server.internal.ServerTraceEvent;
 import org.glassfish.jersey.server.internal.monitoring.EmptyRequestEventBuilder;
 import org.glassfish.jersey.server.internal.monitoring.RequestEventBuilder;
 import org.glassfish.jersey.server.internal.monitoring.RequestEventImpl;
-import org.glassfish.jersey.server.internal.process.AsyncContext;
 import org.glassfish.jersey.server.internal.process.Endpoint;
 import org.glassfish.jersey.server.internal.process.MappableException;
 import org.glassfish.jersey.server.internal.process.RequestProcessingContext;
@@ -115,10 +114,10 @@ import org.glassfish.jersey.server.spi.ExternalRequestScope;
 import org.glassfish.jersey.server.spi.ResponseErrorMapper;
 import org.glassfish.jersey.spi.ExceptionMappers;
 
-import static org.glassfish.jersey.server.internal.process.AsyncContext.State.COMPLETED;
-import static org.glassfish.jersey.server.internal.process.AsyncContext.State.RESUMED;
-import static org.glassfish.jersey.server.internal.process.AsyncContext.State.RUNNING;
-import static org.glassfish.jersey.server.internal.process.AsyncContext.State.SUSPENDED;
+import static org.glassfish.jersey.server.AsyncContext.State.COMPLETED;
+import static org.glassfish.jersey.server.AsyncContext.State.RESUMED;
+import static org.glassfish.jersey.server.AsyncContext.State.RUNNING;
+import static org.glassfish.jersey.server.AsyncContext.State.SUSPENDED;
 
 /**
  * Server-side request processing runtime.
@@ -714,8 +713,7 @@ public class ServerRuntime {
                                     runtime.requestScope.referenceCurrent(),
                                     request,
                                     response,
-                                    connectionCallbackRunner,
-                                    processingContext.asyncContextValue());
+                                    connectionCallbackRunner);
                         } catch (final IOException ex) {
                             LOGGER.log(Level.SEVERE, LocalizationMessages.ERROR_WRITING_RESPONSE_ENTITY_CHUNK(), ex);
                             close = true;

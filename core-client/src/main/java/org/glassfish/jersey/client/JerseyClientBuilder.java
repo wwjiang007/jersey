@@ -8,12 +8,12 @@
  * and Distribution License("CDDL") (collectively, the "License").  You
  * may not use this file except in compliance with the License.  You can
  * obtain a copy of the License at
- * http://glassfish.java.net/public/CDDL+GPL_1_1.html
- * or packager/legal/LICENSE.txt.  See the License for the specific
+ * https://oss.oracle.com/licenses/CDDL+GPL-1.1
+ * or LICENSE.txt.  See the License for the specific
  * language governing permissions and limitations under the License.
  *
  * When distributing the software, include this License Header Notice in each
- * file and include the License file at packager/legal/LICENSE.txt.
+ * file and include the License file at LICENSE.txt.
  *
  * GPL Classpath Exception:
  * Oracle designates this particular file as subject to the "Classpath"
@@ -37,12 +37,14 @@
  * only if the new code is made subject to such option by the copyright
  * holder.
  */
+
 package org.glassfish.jersey.client;
 
 import java.security.KeyStore;
 import java.util.Map;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.ScheduledExecutorService;
+import java.util.concurrent.TimeUnit;
 
 import javax.ws.rs.client.ClientBuilder;
 import javax.ws.rs.core.Configuration;
@@ -153,6 +155,26 @@ public class JerseyClientBuilder extends ClientBuilder {
     @Override
     public ClientBuilder scheduledExecutorService(ScheduledExecutorService scheduledExecutorService) {
         this.scheduledExecutorService = scheduledExecutorService;
+        return this;
+    }
+
+    @Override
+    public ClientBuilder connectTimeout(long timeout, TimeUnit unit) {
+        if (timeout < 0) {
+            throw new IllegalArgumentException("Negative timeout.");
+        }
+
+        this.property(ClientProperties.CONNECT_TIMEOUT, Math.toIntExact(unit.toMillis(timeout)));
+        return this;
+    }
+
+    @Override
+    public ClientBuilder readTimeout(long timeout, TimeUnit unit) {
+        if (timeout < 0) {
+            throw new IllegalArgumentException("Negative timeout.");
+        }
+
+        this.property(ClientProperties.READ_TIMEOUT, Math.toIntExact(unit.toMillis(timeout)));
         return this;
     }
 

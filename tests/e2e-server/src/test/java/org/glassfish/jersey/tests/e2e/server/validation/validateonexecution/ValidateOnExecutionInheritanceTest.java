@@ -8,12 +8,12 @@
  * and Distribution License("CDDL") (collectively, the "License").  You
  * may not use this file except in compliance with the License.  You can
  * obtain a copy of the License at
- * http://glassfish.java.net/public/CDDL+GPL_1_1.html
- * or packager/legal/LICENSE.txt.  See the License for the specific
+ * https://oss.oracle.com/licenses/CDDL+GPL-1.1
+ * or LICENSE.txt.  See the License for the specific
  * language governing permissions and limitations under the License.
  *
  * When distributing the software, include this License Header Notice in each
- * file and include the License file at packager/legal/LICENSE.txt.
+ * file and include the License file at LICENSE.txt.
  *
  * GPL Classpath Exception:
  * Oracle designates this particular file as subject to the "Classpath"
@@ -51,15 +51,13 @@ import javax.validation.executable.ValidateOnExecution;
 
 import org.glassfish.jersey.server.ResourceConfig;
 import org.glassfish.jersey.server.ServerProperties;
-import org.glassfish.jersey.test.util.runner.ConcurrentRunner;
 
 import org.junit.Test;
-import org.junit.runner.RunWith;
 
 /**
  * @author Michal Gajdos
  */
-@RunWith(ConcurrentRunner.class)
+// @RunWith(ConcurrentRunner.class)
 public class ValidateOnExecutionInheritanceTest extends ValidateOnExecutionAbstractTest {
 
     /**
@@ -332,7 +330,7 @@ public class ValidateOnExecutionInheritanceTest extends ValidateOnExecutionAbstr
 
     @Test
     public void testOnTypeValidateInputPassValidateExecutableDefault() throws Exception {
-        _testOnType("default", 15, 400);
+        _testOnType("default", 15, 200);
     }
 
     @Test
@@ -347,7 +345,7 @@ public class ValidateOnExecutionInheritanceTest extends ValidateOnExecutionAbstr
 
     @Test
     public void testMixedClassValidateInputPassValidateDefault() throws Exception {
-        _test("mixed-class-default", 15, 400);
+        _test("mixed-class-default", 15, 200);
     }
 
     @Test
@@ -362,7 +360,7 @@ public class ValidateOnExecutionInheritanceTest extends ValidateOnExecutionAbstr
 
     @Test
     public void testMixedClassValidateInputPassNone() throws Exception {
-        _test("mixed-class-none", 15, 400);
+        _test("mixed-class-none", 15, 200);
     }
 
     @Test

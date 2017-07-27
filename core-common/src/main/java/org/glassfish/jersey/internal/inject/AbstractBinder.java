@@ -8,12 +8,12 @@
  * and Distribution License("CDDL") (collectively, the "License").  You
  * may not use this file except in compliance with the License.  You can
  * obtain a copy of the License at
- * http://glassfish.java.net/public/CDDL+GPL_1_1.html
- * or packager/legal/LICENSE.txt.  See the License for the specific
+ * https://oss.oracle.com/licenses/CDDL+GPL-1.1
+ * or LICENSE.txt.  See the License for the specific
  * language governing permissions and limitations under the License.
  *
  * When distributing the software, include this License Header Notice in each
- * file and include the License file at packager/legal/LICENSE.txt.
+ * file and include the License file at LICENSE.txt.
  *
  * GPL Classpath Exception:
  * Oracle designates this particular file as subject to the "Classpath"
@@ -62,7 +62,7 @@ import org.glassfish.jersey.internal.LocalizationMessages;
  * <p>
  * Currently, there are supported only bind method and more complicated method where HK2 interfaces are required were omitted.
  *
- * @author Petr Bouda (petr.bouda at oracle.com)
+ * @author Petr Bouda
  */
 public abstract class AbstractBinder implements Binder {
 
