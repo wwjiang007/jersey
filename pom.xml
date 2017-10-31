@@ -53,10 +53,10 @@
     <groupId>org.glassfish.jersey</groupId>
     <artifactId>project</artifactId>
     <packaging>pom</packaging>
-    <version>2.26-SNAPSHOT</version>
+    <version>2.27-SNAPSHOT</version>
     <name>jersey</name>
     <description>
-        Jersey is the open source (under dual CDDL+GPL license) JAX-RS 2.0 (JSR 339)
+        Jersey is the open source (under dual CDDL+GPL license) JAX-RS 2.1 (JSR 370)
         production quality Reference Implementation for building RESTful Web services.
     </description>
 
@@ -315,7 +315,7 @@
                                 All Rights Reserved. Use is subject to license terms.]]>
                         </bottom>
                         <links>
-                            <link>http://jersey.java.net/apidocs-javax.jax-rs/2.0.1</link>
+                            <link>https://jax-rs.github.io/apidocs/2.1/</link>
                             <link>http://hk2.java.net/nonav/hk2-api/apidocs</link>
                         </links>
                         <excludePackageNames>
@@ -1174,7 +1174,7 @@
                         com.sun.ws.rs.ext:*.examples.*:*.internal.*:*.tests.*
                     </excludePackageNames>
                     <links>
-                        <link>http://jersey.github.io/apidocs-javax.jax-rs/2.0.1</link>
+                        <link>https://jax-rs.github.io/apidocs/2.1</link>
                         <link>https://javaee.github.io/hk2/apidocs/</link>
                     </links>
                     <additionalparam>-Xdoclint:none</additionalparam>
@@ -1870,7 +1870,7 @@
         <jaxb.ri.version>2.2.7</jaxb.ri.version>
         <jsonb.api.version>1.0</jsonb.api.version>
         <jaxrs.api.spec.version>2.1</jaxrs.api.spec.version>
-        <jaxrs.api.impl.version>2.1-m09</jaxrs.api.impl.version>
+        <jaxrs.api.impl.version>2.1</jaxrs.api.impl.version>
         <jboss.logging.version>3.3.0.Final</jboss.logging.version>
         <jersey1.version>1.19.3</jersey1.version>
         <jersey1.last.final.version>${jersey1.version}</jersey1.last.final.version>
@@ -1904,7 +1904,7 @@
         <rome.version>1.0</rome.version>
         <servlet2.version>2.4</servlet2.version>
         <servlet3.version>3.0.1</servlet3.version>
-        <servlet4.version>4.0.0-b07</servlet4.version>
+        <servlet4.version>4.0.0</servlet4.version>
         <simple.version>6.0.1</simple.version>
         <slf4j.version>1.7.12</slf4j.version>
         <spring4.version>4.3.4.RELEASE</spring4.version>
